@@ -1,0 +1,18 @@
+# Fallback for people not using uv:
+#   python -m venv .venv
+#   Windows:  .venv\Scripts\activate      macOS/Linux:  source .venv/bin/activate
+#   pip install -r requirements.txt
+numpy>=1.26
+pandas>=2.2
+scikit-learn>=1.4
+statsmodels>=0.14
+matplotlib>=3.8
+requests>=2.31
+prometheus-client>=0.20
+jupyterlab>=4.2
+ipykernel>=6.29
+pytest>=8
+nbclient>=0.10
+nbformat>=5.10
+# install this repo's package (src/sre_pca) in editable mode so `sre-pca`, `sre-fault` etc. exist
+-e .

@@ -1,0 +1,9 @@
+apiVersion: 1
+providers:
+  - name: sre-pca-lab
+    folder: SRE PCA Lab
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

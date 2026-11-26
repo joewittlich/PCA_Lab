@@ -1,0 +1,48 @@
+[project]
+name = "sre-pca-lab"
+version = "0.1.0"
+description = "Local, vendor-agnostic lab for PCA / reconstruction-error anomaly detection on SRE metrics"
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "scikit-learn>=1.4",
+    "statsmodels>=0.14",
+    "matplotlib>=3.8",
+    "requests>=2.31",
+    "prometheus-client>=0.20",
+    "jupyterlab>=4.2",
+    "ipykernel>=6.29",
+]
+
+[project.optional-dependencies]
+extras = ["plotly>=5.20", "polars>=1.0", "duckdb>=1.0"]
+
+[dependency-groups]
+dev = ["pytest>=8", "nbclient>=0.10", "nbformat>=5.10", "ruff>=0.6"]
+
+[project.scripts]
+sre-pca = "sre_pca.cli:main"
+sre-fault = "sre_pca.fault:main"
+sre-scenario = "sre_pca.scenario:main"
+sre-pca-exporter = "sre_pca.exporter:main"
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sre_pca"]
+
+[tool.ruff]
+line-length = 140
+src = ["src"]
+extend-exclude = ["notebooks/*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = ["B905"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

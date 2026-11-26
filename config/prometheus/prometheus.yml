@@ -1,0 +1,35 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: node
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  # The collector's own health/throughput metrics.
+  - job_name: otel-collector
+    static_configs:
+      - targets: ["otel-collector:8888"]
+
+  # Metrics the demo app pushed via OTLP, re-exposed by the collector's Prometheus exporter.
+  - job_name: otel-app-metrics
+    honor_labels: true
+    static_configs:
+      - targets: ["otel-collector:8889"]
+
+  # The demo app's native prometheus_client endpoint (primary source for the notebook).
+  - job_name: demo-app
+    static_configs:
+      - targets: ["demo-app:8000"]
+
+  # NEXT STEP (optional): anomaly score exporter running on your host.
+  # Start it with `uv run sre-pca-exporter` and uncomment, then: curl -X POST localhost:9090/-/reload
+  # - job_name: sre-pca-anomaly
+  #   scrape_interval: 15s
+  #   static_configs:
+  #     - targets: ["host.docker.internal:9105"]

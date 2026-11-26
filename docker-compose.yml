@@ -1,0 +1,114 @@
+# SRE PCA lab - local, vendor-agnostic observability stack.
+#   docker compose up -d --build              # core stack
+#   docker compose --profile load run --rm k6 # generate load (see README)
+# Host ports can be overridden in .env (copy .env.example).
+name: sre-pca-lab
+
+services:
+  demo-app:
+    build: ./app
+    image: sre-pca-lab/demo-app:local
+    container_name: demo-app
+    environment:
+      OTEL_ENABLED: "${OTEL_ENABLED:-true}"
+      OTEL_SERVICE_NAME: demo-app
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      FAULT_LATENCY_MS: "${FAULT_LATENCY_MS:-0}"
+      FAULT_CPU: "${FAULT_CPU:-false}"
+      FAULT_ERROR_RATE: "${FAULT_ERROR_RATE:-0}"
+      CPU_BURN_THREADS: "${CPU_BURN_THREADS:-2}"
+      BASE_ERROR_RATE: "${BASE_ERROR_RATE:-0.002}"
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    depends_on:
+      - otel-collector
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.114.0
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol/collector.yaml"]
+    volumes:
+      - ./config/otel:/etc/otelcol:ro
+    ports:
+      - "${OTLP_GRPC_PORT:-4317}:4317"   # OTLP gRPC
+      - "${OTLP_HTTP_PORT:-4318}:4318"   # OTLP HTTP
+      - "${OTEL_METRICS_PORT:-8889}:8889" # Prometheus exporter (app metrics received via OTLP)
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle            # allows POST /-/reload
+      - --web.enable-admin-api            # allows deleting series while experimenting
+    volumes:
+      - ./config/prometheus:/etc/prometheus:ro   # dir mount so edits + /-/reload are picked up
+      - prometheus-data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # lets Prometheus scrape the optional anomaly exporter on your host
+    restart: unless-stopped
+
+  # NOTE: node_exporter reports on the Linux kernel it runs on. On native Linux that is your machine.
+  # On Docker Desktop (Windows/macOS) it is the Docker Desktop Linux VM, not your laptop - still a
+  # perfectly good "host" signal for experiments, just know what it is.
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: node-exporter
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    ports:
+      - "${NODE_EXPORTER_PORT:-9100}:9100"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_ADMIN_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      GF_USERS_DEFAULT_THEME: dark
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # Load generator. Only starts when the "load" profile is requested:
+  #   docker compose --profile load run --rm k6
+  #   LOAD_DURATION=30m LOAD_RPS=40 docker compose --profile load run --rm k6
+  k6:
+    image: grafana/k6:0.55.0
+    container_name: k6
+    profiles: ["load"]
+    command: ["run", "/scripts/load.js"]
+    environment:
+      TARGET: http://demo-app:8000
+      LOAD_DURATION: "${LOAD_DURATION:-10m}"
+      LOAD_RPS: "${LOAD_RPS:-20}"
+      LOAD_WAVE_PERIOD_S: "${LOAD_WAVE_PERIOD_S:-300}"
+    volumes:
+      - ./load:/scripts:ro
+    depends_on:
+      - demo-app
+
+volumes:
+  prometheus-data:
+  grafana-data:
