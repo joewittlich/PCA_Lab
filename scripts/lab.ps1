@@ -37,9 +37,16 @@ function Invoke-Py {
     }
 }
 
+function Test-DockerEngine {
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = "SilentlyContinue"
+    try { docker info *> $null; $ok = ($LASTEXITCODE -eq 0) } catch { $ok = $false }
+    finally { $ErrorActionPreference = $prev }
+    return $ok
+}
+
 function Assert-Docker {
-    docker info *> $null
-    if ($LASTEXITCODE -ne 0) {
+    if (-not (Test-DockerEngine)) {
         throw "Docker is not running. Start Docker Desktop (Start menu) and wait until it says 'Engine running', then retry."
     }
 }

@@ -98,13 +98,20 @@ if (Have uv) {
     Warn "uv still not found - open a NEW PowerShell window and run: uv sync"
 }
 
+function Test-DockerEngine {
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = "SilentlyContinue"
+    try { docker info *> $null; $ok = ($LASTEXITCODE -eq 0) } catch { $ok = $false }
+    finally { $ErrorActionPreference = $prev }
+    return $ok
+}
+
 # ---------------------------------------------------------------- summary
 Say "Checks"
 if (Have git) { Ok "git" } else { Warn "git missing (open a new terminal?)" }
 if (Have uv)  { Ok "uv" }  else { Warn "uv missing (open a new terminal?)" }
 if (Have docker) {
-    docker info *> $null
-    if ($LASTEXITCODE -eq 0) { Ok "Docker engine running" }
+    if (Test-DockerEngine) { Ok "Docker engine running" }
     else { Warn "Docker installed but engine not running: start 'Docker Desktop' from the Start menu, accept the terms, wait for 'Engine running'." }
 } else { Warn "docker missing" }
 
