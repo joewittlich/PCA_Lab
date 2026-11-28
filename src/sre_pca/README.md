@@ -8,6 +8,7 @@ Use this guide when reviewing a change to the analysis, the benchmark, or the li
 | What does a flag mean? | [core.py](core.py) and [cli.py](cli.py) | The model learns a baseline, then flags rows whose reconstruction error exceeds the fitted threshold. The largest contributor identifies a measurement to investigate. |
 | How old is the displayed score? | [exporter.py](exporter.py) | The exporter chooses the newest row with finite values for every feature used in training. A missing trained feature can leave the previous score on display. |
 | Can two ordinary readings form an unusual pair? | [benchmark.py](benchmark.py) | The experiment pairs recorded synthetic CPU values from higher traffic with lower request rates. Compare both detectors on the same held-out rows. |
+| What did each chapter of a long run do? | [scenario.py](scenario.py) and the `chapters` list in `summary.json` | The three-hour profile records a start and end per chapter. The summary gives the flagged fraction, the seconds to the first flag, and the contributors in the order they first appear. |
 
 ## Review the live score
 

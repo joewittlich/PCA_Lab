@@ -226,9 +226,9 @@ def test_five_minute_lab_run():
         assert float(final["error_rate"]) == 0
         _assert_summary(summary, manifest)
         scores = pd.read_csv(OUT / "scores.csv", index_col=0)
-        assert list(scores.columns) == [
-            "recon_error", "top_contributor", "anomaly", "fault_cpu", "fault_errors", "fault_latency",
-        ]
+        assert list(scores.columns[:3]) == ["recon_error", "top_contributor", "anomaly"]
+        assert set(scores.columns[3:]) >= {"fault_cpu", "fault_errors", "fault_latency"}
+        assert all(column.startswith("fault_") for column in scores.columns[3:])
         assert len(scores) == summary["rows"]
         for column in ("fault_latency", "fault_cpu", "fault_errors"):
             assert int(scores[column].sum()) > 0, column

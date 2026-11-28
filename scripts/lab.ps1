@@ -57,8 +57,9 @@ Usage: .\scripts\lab.ps1 <command> [args]
 
 Stack:    up | down | nuke | status | logs [service]
 Load:     load [dur] [rps] | load-bg [dur] [rps] | load-stop
-Faults:   fault latency <ms> | fault cpu on|off | fault errors <rate> | fault reset | fault status
-          scenario [--baseline-min 5 --fault-min 2 --gap-min 2]
+Faults:   fault latency <ms> | fault cpu on|off | fault errors <rate> | fault retries <n> | fault reset | fault status
+          fault client_retries <n> | fault downstream <ms> | fault timeout <ms> | fault leak <mb> | fault leak_release
+          scenario [--baseline-min 5 --fault-min 2 --gap-min 2 | --profile long]
 Analysis: analyze [--run latest | --minutes 40 ...] | synthetic | notebook | exporter | test | test-short
 "@
 }
