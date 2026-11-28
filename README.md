@@ -3,6 +3,9 @@
 A local, vendor-agnostic sandbox for trying **PCA / reconstruction-error anomaly detection** on
 service metrics. Everything is open source and runs on your laptop with Docker.
 
+Preparing for your first on-call rotation? Start with the [no-install incident exercise](docs/first-on-call/exercise.md).
+Work through a recorded slowdown on your own or with a teammate. The [facilitator guide](docs/first-on-call/facilitator-guide.md) contains the reveal and debrief.
+
 ```
  k6 load ──► demo-app (FastAPI) ──OTLP──► OpenTelemetry Collector ──┐
               │  /metrics  ▲ fault toggles                          │ :8889
