@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Lab outputs. reports/.gitkeep stays tracked so the directory exists.
+reports/*
+!reports/.gitkeep

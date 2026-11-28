@@ -226,7 +226,7 @@
   <h2 id="report-title" data-key="report.title">Explore your report</h2>
   <p data-key="report.intro">Open either file from your reports folder. Your browser reads each file locally. To compare the two, choose files from the same run.</p>
 
-  <p data-key="report.filesHelp">After you run the lab analysis, open the files it creates in the reports folder. You can also use the two example files supplied with this lesson.</p>
+  <p data-key="report.filesHelp">After you run the lab analysis, open scores.csv and summary.json in the reports folder. A summary from a current run also names the run id and the time window that was analyzed. You can also use the two example files supplied with this lesson.</p>
   <p><a href="../evidence/scores.csv" download data-key="report.exampleScores">Save the example scores file</a> · <a href="../evidence/summary.json" download data-key="report.exampleSummary">Save the example summary file</a></p>
   <noscript><p data-key="report.noScript">Enable JavaScript to read a report here. You can complete the recorded exercise above with JavaScript off.</p></noscript>
   <div id="report-inputs" hidden>
@@ -257,7 +257,7 @@
   </div>
 
   <h3 data-key="report.summaryTitle">Compare detection windows</h3>
-  <p data-key="report.summaryHelp">Read the sample count beside each flagged percentage. A result of 100% in a short fault window can describe just a few samples.</p>
+  <p data-key="report.summaryHelp">Read the sample count beside each flagged percentage. A result of 100% in a short fault window can describe just a few samples. An after_run window is the time after the scenario's recorded end. It is separate from the held-out normal samples.</p>
   <label for="report-json" data-key="report.chooseJson">Choose summary.json (up to 256 KiB)</label>
   <input id="report-json" type="file" accept=".json,application/json">
   <p id="report-json-status" role="status" aria-live="polite" aria-atomic="true"></p>

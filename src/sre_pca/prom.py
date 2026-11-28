@@ -75,13 +75,20 @@ def fetch_metrics(
     end: datetime | None = None,
     queries: dict[str, str] | None = None,
     url: str = PROM_URL,
+    start: datetime | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Return (metrics, faults): two DataFrames on the same UTC time index.
 
-    faults has one 0/1 column per injected fault type (fault_latency, fault_cpu, fault_errors)."""
+    faults has one 0/1 column per injected fault type (fault_latency, fault_cpu, fault_errors).
+    With ``start`` omitted, the range is the ``minutes`` before ``end`` (default: now)."""
     queries = queries or DEFAULT_QUERIES
     end = end or datetime.now(timezone.utc)
-    start = end - timedelta(minutes=minutes)
+    if end.tzinfo is None:
+        end = end.replace(tzinfo=timezone.utc)
+    if start is None:
+        start = end - timedelta(minutes=minutes)
+    elif start.tzinfo is None:
+        start = start.replace(tzinfo=timezone.utc)
     cols = {name: _to_series(query_range(q, start, end, step, url), name) for name, q in queries.items()}
     df = pd.DataFrame(cols).sort_index()
 

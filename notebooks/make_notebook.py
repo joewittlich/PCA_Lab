@@ -26,7 +26,7 @@ pd.set_option("display.width", 140)
 %matplotlib inline"""),
     md("""## 1. Settings
 `SOURCE`: `"auto"` (Prometheus if reachable, else synthetic), `"prometheus"`, or `"synthetic"`.
-`MINUTES`: how far back to pull. Run a scenario first (`uv run sre-scenario` + k6 load), then set MINUTES to cover it."""),
+`MINUTES`: lookback from the moment this cell runs. `sre-pca --run <id>` uses the window in `reports/runs/<id>.json` instead. This notebook does not read that file. After a scenario, set MINUTES so the pull still covers the run, or analyze with the CLI."""),
     code("""import os
 SOURCE = os.getenv("SRE_PCA_SOURCE", "auto")
 PROM_URL = prom.PROM_URL        # http://localhost:9090 unless $PROM_URL is set

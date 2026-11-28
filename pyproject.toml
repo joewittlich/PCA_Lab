@@ -46,3 +46,7 @@ ignore = ["B905"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not short_run'"
+markers = [
+    "short_run: live five-minute lab session; writes reports/short-run/",
+]

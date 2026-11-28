@@ -95,18 +95,22 @@ pip install -r requirements.txt    # also installs this repo (src/sre_pca) in ed
 
 ## 2. Quickstart
 
+A single timed session, from `up` through the written report, is in [docs/quickstart.md](docs/quickstart.md).
+
 | Step | macOS / Linux | Windows PowerShell |
 |---|---|---|
 | Start stack | `./scripts/lab.sh up` (or `make up`) | `.\scripts\lab.ps1 up` |
 | Check health | `./scripts/lab.sh status` | `.\scripts\lab.ps1 status` |
-| Generate load (terminal 1) | `./scripts/lab.sh load 30m 20` | `.\scripts\lab.ps1 load 30m 20` |
+| Generate load (terminal 1) | `./scripts/lab.sh load 40m 20` | `.\scripts\lab.ps1 load 40m 20` |
 | Scripted faults (terminal 2) | `./scripts/lab.sh scenario` | `.\scripts\lab.ps1 scenario` |
-| Analyze | `./scripts/lab.sh analyze --minutes 30` | `.\scripts\lab.ps1 analyze --minutes 30` |
+| Analyze | `./scripts/lab.sh analyze --run latest` | `.\scripts\lab.ps1 analyze --run latest` |
 | Notebook | `./scripts/lab.sh notebook` | `.\scripts\lab.ps1 notebook` |
 | Stop | `./scripts/lab.sh down` | `.\scripts\lab.ps1 down` |
 
 The first `up` downloads about 1.5 GB of images and builds the app, so it takes a few minutes. `status` should then show
-every Prometheus target as `up`.
+every Prometheus target as `up`. `load` records `reports/runs/<run_id>.json`, and the scenario completes that file.
+`./scripts/lab.sh test-short` (PowerShell: `.\scripts\lab.ps1 test-short`) runs a live five-minute check of the same path
+and writes `reports/short-run/`. The stack must already be up. Ordinary `test` stays offline and skips it.
 
 ### URLs and ports
 
@@ -130,7 +134,7 @@ see if the reconstruction error catches them.
 
 **1. Start load and leave it running.** It's a steady rate with a slow 5-minute wave, so the baseline isn't perfectly flat:
 ```bash
-./scripts/lab.sh load 30m 20            # duration, average requests/sec
+./scripts/lab.sh load 40m 20            # duration, average requests/sec; outlasts the 28-minute scenario
 ```
 
 **2. Inject faults.** In a second terminal, either run the scripted scenario:
@@ -155,17 +159,26 @@ The app also has a small background error rate (`BASE_ERROR_RATE=0.002`) so "err
 Every fault toggle is recorded in the `demo_fault_active{type=...}` metric. The analysis uses it to **shade the fault periods**
 and to keep fault samples out of the baseline.
 
-**3. Analyze.**
+`load` writes `reports/runs/<run_id>.json` with the load start, planned end, and rate. The scenario adds its start, the first fault time, and its finish time to that file (or starts a new file and copies the load block when the previous scenario already finished). Ctrl+C still clears the faults and records `scenario.end`, with `"status": "interrupted"`.
+
+**3. Analyze.** When the scenario finishes it prints the command to reopen that window, including if you come back later:
 ```bash
-./scripts/lab.sh analyze --minutes 30   # prints explained variance, loadings, detection rates, inverse example
+./scripts/lab.sh analyze --run latest
 ```
-This writes plots and data to `reports/`: `pca_scree_scatter.png`, `recon_error.png`, `raw_metrics.png`, `scores.csv` and `summary.json`.
+`--run latest` reads the newest manifest. `--run <run_id>` or a path to the JSON file selects one run. The query starts two minutes before the load start (or the scenario start, when no load time was recorded) and ends two minutes after the scenario end. Training uses the loaded stretch up to two minutes before the first fault, so the quiet period before k6 and the `rate()[1m]` ramp stay out of the fit. That interval has to leave at least 20 samples, about seven minutes of loaded time before the first fault at a 15-second step. Otherwise the summary's `baseline_rule` is `first_fraction` (the first 40% of the pulled window). Samples after `scenario.end` are scored as `after_run` and stay out of the held-out normal row.
+
+`--minutes 30` is still a lookback from the moment you run the command. It does not remember when the scenario happened. `--start` and `--end` take an explicit UTC window and override both `--run` and `--minutes`.
+
+This writes plots and data to `reports/`: `pca_scree_scatter.png`, `recon_error.png`, `raw_metrics.png`, `scores.csv` and `summary.json`. The summary includes `run_id`, the query window, the data span, `baseline_start` / `baseline_end` / `baseline_rule`, and `fault_intervals`.
 Useful flags:
 
 | Flag | Meaning |
 |---|---|
+| `--run latest` / `--run <id>` | Analyze the window stored in `reports/runs/<id>.json` |
+| `--start` / `--end` | Explicit UTC ISO-8601 window. Overrides `--run` and `--minutes` |
+| `--minutes N` | Lookback from `--end` (default: now) when `--run` and `--start` are omitted |
 | `--source auto\|prometheus\|synthetic` | `auto` uses synthetic data if Prometheus is unreachable or has fewer than 20 rows with any metric value. Check `source` in `summary.json`. |
-| `--baseline-minutes N` | Fit on the first N minutes. By default the lab leaves eight samples between training and the first labeled fault. With no labeled fault or fewer than 20 candidate rows, the default uses the first 40% of the series (at least 20 rows if available). It then excludes labeled fault rows. |
+| `--baseline-minutes N` | Fit on the first N minutes of the pulled window. Overrides the manifest baseline. With a manifest, the default is the loaded stretch up to two minutes before the first fault. Otherwise the lab leaves eight samples between training and the first labeled fault. If that leaves fewer than 20 rows, or there is no labeled fault, the default uses the first 40% of the series (at least 20 rows if available). It then excludes labeled fault rows. |
 | `--var-target 0.9` / `--k 3` | How many PCs to keep |
 | `--quantile 0.99` | Threshold = this quantile of baseline reconstruction error |
 | `--deseason stl --period 20` | Remove a cycle first. The period is in samples: the k6 wave is 300 s / 15 s = 20, and a real day at 15 s is 5760. |
@@ -185,7 +198,7 @@ To check notebook execution from a terminal, run `uv run pytest -q tests/test_no
 On Windows, this test uses a dedicated event loop to read messages from the Jupyter kernel.
 
 **No Docker yet?** Run `./scripts/lab.sh synthetic` (or `uv run sre-pca --source synthetic`) and `./scripts/lab.sh test`.
-The synthetic command analyzes generated data. The tests also cover the exporter, detector comparison, and lesson translation tool.
+The synthetic command analyzes generated data. The default tests are offline and also cover the exporter, detector comparison, and lesson translation tool. `test-short` is the live five-minute session and needs the stack.
 
 ### Optional experiment: ordinary CPU at unusually low traffic
 
@@ -246,6 +259,9 @@ as your Windows/Mac CPU. Some collectors, like filesystems, will show the VM's d
 | `Bind for 0.0.0.0:3000 failed: port is already allocated` (or 9090/8000/…) | Something else uses the port. Copy `.env.example` to `.env`, change e.g. `GRAFANA_PORT=3001`, and run `up` again. To find the culprit: `lsof -i :3000` (mac/Linux) or `netstat -ano \| findstr :3000` (Windows). |
 | `status` shows a target `down` | Give it 30 s after `up`. Then `./scripts/lab.sh logs <service>`. For `demo-app` down, check `docker compose logs demo-app`. |
 | Analysis says "too little data" / uses synthetic | Prometheus needs a few minutes of data with load running. Use `--source prometheus` to get an error instead of the fallback. |
+| The analysis missed the scenario | `--minutes` looks back from the moment you run it. Use the command the scenario printed, or `--run latest`, so the window comes from `reports/runs/<id>.json`. |
+| `baseline_rule` is `first_fraction` | The manifest baseline had fewer than 20 samples after the two-minute trim. Give the loaded period about seven minutes before the first fault at a 15-second step. `summary.json` records which rule was used. |
+| `after_run` is mostly flagged | Those samples are after `scenario.end`. They are separate from the held-out normal row. A quiet stretch after k6 stops often flags. |
 | "Normal" time after the faults is still flagged | That's often real: after a fault, memory levels like `app_rss_mb` settle at a new level, and on Docker Desktop `node_mem_used_frac` moves with everything else on the VM. Use a longer baseline, or `--drop app_rss_mb,node_mem_used_frac` to model rates and latencies only. Up to about 1 min after a fault ends, the `rate(...[1m])` windows are still catching up. |
 | Every sample is flagged / nothing is flagged | Make sure the baseline is a healthy period with load running (`--baseline-minutes`). Try a different `--k` or `--quantile`, or run a longer baseline. |
 | PowerShell: "running scripts is disabled on this system" | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, or prefix with `powershell -ExecutionPolicy Bypass -File`. |
@@ -300,11 +316,17 @@ docs/first-on-call/      offline lesson, facilitator guide, translation resource
 load/load.js             k6 load profile
 notebooks/               starter notebook (+ generator script)
 src/sre_pca/             core.py (PCA logic), prom.py (Prometheus API), synthetic.py, plots.py,
-                         cli.py (sre-pca), fault.py (sre-fault), scenario.py (sre-scenario), exporter.py,
-                         benchmark.py (offline detector comparison)
+                         cli.py (sre-pca), fault.py (sre-fault), scenario.py (sre-scenario),
+                         runs.py (run manifests), exporter.py, benchmark.py,
+                         prediction_exercises.py
 scripts/                 bootstrap.ps1 / bootstrap.sh, lab.ps1 / lab.sh
-tests/                   PCA math, notebook execution, exporter freshness, benchmark, lesson localization
-reports/                 generated analysis outputs and scenario log
+tests/                   pytest. The default run is offline: PCA math, notebook execution,
+                         exporter freshness, benchmark, lesson localization, prediction exercises.
+                         `test-short` is a live 5-minute session that writes `reports/short-run/`
+                         (stack must already be up)
+reports/                 analysis outputs, gitignored except .gitkeep: plots, scores.csv, summary.json
+reports/runs/            one JSON manifest per load/scenario (`latest` names the newest)
+reports/short-run/       record from `test-short` (record.json, summary, scores, plots)
 ```
 
 Pinned images: `otel/opentelemetry-collector-contrib:0.114.0`, `prom/prometheus:v2.55.1`,

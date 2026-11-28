@@ -73,6 +73,12 @@
       "context": "The evaluator also excludes a short period after the fault. Two samples counted as held-out normal in this recording.",
       "machine_tokens": ["normal (held-out)"]
     },
+    "after_run": {
+      "preferred": "after the run",
+      "meaning": "Samples taken after the scenario's recorded end.",
+      "context": "Keep this window separate from the held-out normal samples. The example evidence file has no after_run row. A summary from a current lab run can.",
+      "machine_tokens": ["after_run"]
+    },
     "score": {
       "preferred": "score",
       "meaning": "A number that measures the mismatch between the observed measurements and the model's estimates.",
