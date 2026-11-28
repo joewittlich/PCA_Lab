@@ -1,7 +1,8 @@
 # SRE PCA Lab
 
 A local, vendor-agnostic sandbox for trying **PCA / reconstruction-error anomaly detection** on
-service metrics. Everything is open source and runs on your laptop with Docker.
+service metrics. Use Docker Compose to generate live observations from the demo service. Use the
+Python CLI or notebook to study generated data. The recorded on-call exercise needs only a browser.
 
 **Preparing for your first on-call rotation?** Download and extract the repository ZIP, then open
 `docs/first-on-call/en-US/index.html` in your browser. The [US English lesson](docs/first-on-call/en-US/index.html)
@@ -10,16 +11,17 @@ to run the activity offline. Copy the entire `first-on-call` folder to include t
 [translation resources](docs/first-on-call/en-US/translation-guide.html).
 
 After a lab run, select `reports/scores.csv` or `reports/summary.json` on the page to explore the results.
-The browser reads the files you choose. The activity requires no server, account, or connection to Docker.
+The browser reads the files you choose. Use the [lesson review notes](docs/first-on-call/en-US/README.md)
+to trace the recorded case back to its evidence or review an edit with a learner.
 
 ```
- k6 load ──► demo-app (FastAPI) ──OTLP──► OpenTelemetry Collector ──┐
-              │  /metrics  ▲ fault toggles                          │ :8889
-              ▼            │ (latency / CPU / errors)               ▼
-        node-exporter ──► Prometheus  ◄─────────────────────────────┘
-                           │   ▲
-                 Grafana ◄─┘   └── Python (pandas, scikit-learn, Jupyter): PCA, scree,
-                                    PC1/PC2, reconstruction error, inverse transform
+k6 generates requests to the demo app.
+
+demo-app /metrics            -> Prometheus
+demo-app -> OTLP -> Collector -> Prometheus (scrapes the Collector on port 8889)
+node-exporter /metrics       -> Prometheus
+
+Grafana, the notebook, and the Python CLI query Prometheus.
 ```
 
 | Piece | What it's for |
@@ -36,7 +38,8 @@ The browser reads the files you choose. The activity requires no server, account
 
 ## 1. Prerequisites (starting from nothing)
 
-You need **Git**, **Docker** (with Compose v2), and **uv**, which installs Python 3.12 for you.
+For the live experiment, the setup below uses **Git**, **Docker** (with Compose v2), and **uv**, which installs Python 3.12 for you.
+On macOS, Linux, or WSL, run `chmod +x scripts/bootstrap.sh scripts/lab.sh` after extracting or cloning the repository so the shell and Make commands below can start the scripts.
 The bootstrap scripts install only what's missing and are safe to re-run.
 
 You'll need about 4 GB of free RAM for Docker and about 3 GB of disk for the images and Python packages.
@@ -116,7 +119,7 @@ every Prometheus target as `up`.
 | node-exporter | http://localhost:9100/metrics | |
 | OTel Collector | 4317 (gRPC), 4318 (HTTP) OTLP in; http://localhost:8889/metrics re-exported app metrics | |
 
-You can change any host port: `cp .env.example .env` and edit it. On Windows, use `copy .env.example .env`.
+To change a published Compose port, copy `.env.example` to `.env` and edit it. The host scripts also need the new addresses. For example, for `PROMETHEUS_PORT=9091`, set `export PROM_URL=http://localhost:9091` in Bash or `$env:PROM_URL = 'http://localhost:9091'` in PowerShell before running `status` or `analyze`. If you change the app port, set `APP_URL` before using the fault or scenario commands.
 
 ---
 
@@ -161,8 +164,8 @@ Useful flags:
 
 | Flag | Meaning |
 |---|---|
-| `--source auto\|prometheus\|synthetic` | `auto` falls back to synthetic data if Prometheus isn't reachable |
-| `--baseline-minutes N` | Fit on the first N minutes. The default is everything before the first injected fault. |
+| `--source auto\|prometheus\|synthetic` | `auto` uses synthetic data if Prometheus is unreachable or has fewer than 20 rows with any metric value. Check `source` in `summary.json`. |
+| `--baseline-minutes N` | Fit on the first N minutes. By default the lab leaves eight samples between training and the first labeled fault. With no labeled fault or fewer than 20 candidate rows, the default uses the first 40% of the series (at least 20 rows if available). It then excludes labeled fault rows. |
 | `--var-target 0.9` / `--k 3` | How many PCs to keep |
 | `--quantile 0.99` | Threshold = this quantile of baseline reconstruction error |
 | `--deseason stl --period 20` | Remove a cycle first. The period is in samples: the k6 wave is 300 s / 15 s = 20, and a real day at 15 s is 5760. |
@@ -180,7 +183,7 @@ If Prometheus isn't running, it uses synthetic data, so you can explore it befor
 `notebooks/make_notebook.py` regenerates the notebook from code.
 
 **No Docker yet?** Run `./scripts/lab.sh synthetic` (or `uv run sre-pca --source synthetic`) and `./scripts/lab.sh test`.
-Both run on generated data.
+The synthetic command analyzes generated data. The tests also cover the exporter, detector comparison, and lesson translation tool.
 
 ### Optional experiment: ordinary CPU at unusually low traffic
 
@@ -200,7 +203,7 @@ current, lower request rates. Each metric stays within its own baseline range du
 | PCA reconstruction error | 1/180 (0.6%) | 20/20 (100%) |
 
 For this synthetic workload, a healthy high-traffic CPU reading is unusual when paired with low
-traffic. The PCA score measures how far that pairing falls from the learned relationship.
+traffic. The PCA score measures how far that pairing falls from the learned relationship. The percentages count individual samples in each evaluation window. For training thresholds and checks you can reproduce, see the [analysis package guide](src/sre_pca/README.md).
 
 ### What's in the feature matrix
 
@@ -229,7 +232,7 @@ as your Windows/Mac CPU. Some collectors, like filesystems, will show the VM's d
 | `status` shows a target `down` | Give it 30 s after `up`. Then `./scripts/lab.sh logs <service>`. For `demo-app` down, check `docker compose logs demo-app`. |
 | Analysis says "too little data" / uses synthetic | Prometheus needs a few minutes of data with load running. Use `--source prometheus` to get an error instead of the fallback. |
 | "Normal" time after the faults is still flagged | That's often real: after a fault, memory levels like `app_rss_mb` settle at a new level, and on Docker Desktop `node_mem_used_frac` moves with everything else on the VM. Use a longer baseline, or `--drop app_rss_mb,node_mem_used_frac` to model rates and latencies only. Up to about 1 min after a fault ends, the `rate(...[1m])` windows are still catching up. |
-| Every sample is flagged / nothing is flagged | Make sure the baseline is a calm period with load running (`--baseline-minutes`). Try a different `--k` or `--quantile`, or run a longer baseline. |
+| Every sample is flagged / nothing is flagged | Make sure the baseline is a healthy period with load running (`--baseline-minutes`). Try a different `--k` or `--quantile`, or run a longer baseline. |
 | PowerShell: "running scripts is disabled on this system" | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, or prefix with `powershell -ExecutionPolicy Bypass -File`. |
 | `permission denied: ./scripts/lab.sh` (macOS/Linux) | `chmod +x scripts/*.sh`, or run it as `bash scripts/lab.sh ...` |
 | `uv` not found right after install | Open a new terminal so PATH updates. On Windows, it's in `%USERPROFILE%\.local\bin`. |
@@ -239,23 +242,33 @@ as your Windows/Mac CPU. Some collectors, like filesystems, will show the VM's d
 
 ---
 
-## 6. Next steps
+## 6. Optional live score in Grafana
 
-- **Export the anomaly score back to Prometheus.** `uv run sre-pca-exporter` (or `lab.sh exporter`) fits PCA on the
-  last 30 minutes, treated as normal, then serves `sre_pca_reconstruction_error`, `sre_pca_threshold`, `sre_pca_anomaly` and
-  `sre_pca_pc_score{pc=...}` on `:9105`. Uncomment the `sre-pca-anomaly` job in `config/prometheus/prometheus.yml`,
-  then reload with `curl -X POST localhost:9090/-/reload` (or `./scripts/lab.sh down; ./scripts/lab.sh up`). The dashboard's
-  *PCA anomaly score* panel fills in, and you can alert on it with an ordinary Prometheus/Grafana alert rule such as
-  `sre_pca_reconstruction_error > sre_pca_threshold for 2m`. Later, package the exporter as another Compose service.
-  To check the age of the displayed score in seconds, query `time() - sre_pca_last_scored_timestamp_seconds`.
-  The gauge is zero until the first score. It records the Prometheus query timestamp of the latest scored row
-  with finite values for all trained features. A scrape can succeed while this timestamp and the score stay unchanged.
+Start the exporter on your host with `uv run sre-pca-exporter`. It fits PCA on recent data
+(default 30 minutes). Choose a healthy period for training. The exporter excludes rows with a fault label.
+It serves the score, threshold, anomaly flag, and component scores on port 9105.
+
+1. Enable the `sre-pca-anomaly` job in the [Prometheus configuration](config/prometheus/prometheus.yml).
+2. Reload Prometheus with `curl -X POST http://localhost:9090/-/reload` (default port). Open the
+   *PCA anomaly score* panel in Grafana.
+3. Check `sre_pca_last_scored_timestamp_seconds`. Zero means the exporter is waiting for its first
+   complete row. After that, query `time() - sre_pca_last_scored_timestamp_seconds` to get the score's
+   age in seconds. A scrape can succeed while the score stays unchanged. See the
+   [exporter review notes](src/sre_pca/README.md#review-the-live-score).
+
+To try an alert, use `sre_pca_reconstruction_error > sre_pca_threshold` as the expression and
+`for: 2m` as the rule duration. Before paging someone, check whether flagged periods coincide
+with user impact and how often healthy traffic triggers the rule.
+
+## 7. Next steps
+
+- **Package the exporter** as a Compose service if you want to run it with the rest of the stack.
 - **Seasonality.** With days of data, fit per time-of-day, or use `--deseason stl --period 5760` (1 day at 15 s), so
   Monday morning doesn't look like an incident.
-- **Compare detectors.** Try `IsolationForest` or a simple z-score per metric on the same standardized matrix, and Hotelling's T²
+- **Extend the [detector comparison](src/sre_pca/benchmark.py).** Try `IsolationForest` or a simple z-score per metric on the same standardized matrix, and Hotelling's T²
   for "big move *along* normal directions" alongside SPE, which catches moves *off* them.
 - **Per-host / per-pod view.** Scale up with `kind`/`k3d`, then plot each pod as a dot in PC1/PC2 space.
-- **Bigger data.** Use Polars or DuckDB (`uv sync --extra extras`) and VictoriaMetrics or Thanos for long retention. All of them speak PromQL, so the code stays the same.
+- **Bigger data.** The optional Python packages include Polars and DuckDB (`uv sync --extra extras`) for local data analysis. To try longer metric retention, point the lab at a compatible Prometheus query API and check that each feature query still returns one series.
 - **Real services.** Point any OpenTelemetry-instrumented app at `localhost:4317/4318`, or add a Prometheus scrape job,
   then edit `DEFAULT_QUERIES`.
 
@@ -268,13 +281,15 @@ app/                     demo FastAPI service (Dockerfile, fault endpoints, metr
 config/otel/             OpenTelemetry Collector config
 config/prometheus/       scrape config
 config/grafana/          provisioned datasource + dashboard
+docs/first-on-call/      offline lesson, facilitator guide, translation resources, and recorded evidence
 load/load.js             k6 load profile
 notebooks/               starter notebook (+ generator script)
 src/sre_pca/             core.py (PCA logic), prom.py (Prometheus API), synthetic.py, plots.py,
-                         cli.py (sre-pca), fault.py (sre-fault), scenario.py (sre-scenario), exporter.py
+                         cli.py (sre-pca), fault.py (sre-fault), scenario.py (sre-scenario), exporter.py,
+                         benchmark.py (offline detector comparison)
 scripts/                 bootstrap.ps1 / bootstrap.sh, lab.ps1 / lab.sh
-tests/                   pytest: core math + notebook execution on synthetic data
-reports/                 analysis outputs (git-ignored)
+tests/                   PCA math, notebook execution, exporter freshness, benchmark, lesson localization
+reports/                 generated analysis outputs and scenario log
 ```
 
 Pinned images: `otel/opentelemetry-collector-contrib:0.114.0`, `prom/prometheus:v2.55.1`,
