@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en-US" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-key="page.title">Your first on-call handoff | PCA Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #142c35; --muted: #435e66; --accent: #086355; --line: #bdcfca;
+      --paper: #fff; --ground: #f4f7f4; --tint: #e7f2eb; --night: #102f35;
+      font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+      color: var(--ink); background: var(--ground); line-height: 1.6;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; overflow-wrap: anywhere; }
+    a { color: var(--accent); text-underline-offset: .18em; }
+    a:hover { text-decoration-thickness: .14em; }
+    :focus-visible { outline: .2rem solid #b45700; outline-offset: .18rem; }
+    .skip { position: absolute; inset-inline-start: 1rem; inset-block-start: -8rem; z-index: 2;
+      color: var(--ink); background: white; padding: .65rem 1rem; }
+    .skip:focus { inset-block-start: .5rem; }
+    .wrap { max-inline-size: 74rem; margin-inline: auto; padding-inline: clamp(1rem, 4vw, 3rem); }
+    .mast { background: var(--night); color: #f6faf5; border-block-end: .35rem solid #77c6a3; }
+    .mast .wrap { padding-block: clamp(1.5rem, 5vw, 3.8rem); }
+    .brand { margin: 0; color: #b8e5cf; letter-spacing: .035em; font-weight: 700; }
+    h1, h2, h3, h4 { text-wrap: balance; line-height: 1.2; }
+    h1 { font-size: clamp(2.25rem, 6vw, 4.6rem); max-inline-size: 22ch;
+      margin-block: .45rem 1rem; font-family: "Baskervville", Georgia, serif; font-weight: 500; }
+    .mast .intro { color: #e1ece6; margin: 0; max-inline-size: 60ch; font-size: 1.1rem; }
+    .layout { display: grid; grid-template-columns: minmax(9rem, 12.5rem) minmax(0, 1fr);
+      gap: clamp(1rem, 4vw, 3.5rem); align-items: start; padding-block: 2rem 4rem; }
+    nav { border-block-start: .18rem solid var(--accent); padding-block: .8rem; }
+    nav h2 { font-size: 1rem; margin-block: 0 .5rem; }
+    nav ul { padding: 0; margin: 0; list-style: none; }
+    nav a { display: inline-block; padding-block: .35rem; }
+    main { min-inline-size: 0; }
+    main > section { border: 1px solid var(--line); background: var(--paper);
+      margin-block-end: 1.5rem; padding: clamp(1rem, 4vw, 2.5rem); border-radius: .55rem; }
+    main > section > :first-child, details > :nth-child(2) { margin-block-start: 0; }
+    main h2 { font-size: clamp(1.6rem, 3.5vw, 2.2rem); margin-block: 0 1rem; }
+    main h3 { margin-block: 2rem .55rem; font-size: 1.32rem; color: var(--accent); }
+    main h4 { font-size: 1.1rem; margin-block: 1.3rem .45rem; }
+    p, li, label { max-inline-size: 70ch; }
+    p { margin-block: .6rem 1rem; }
+    ol, ul { padding-inline-start: 1.55rem; }
+    li + li { margin-block-start: .25rem; }
+    strong, th, label { font-weight: 650; }
+    code, kbd { font-family: "IBM Plex Mono", Consolas, monospace; font-size: .94em; }
+    table { border-collapse: collapse; inline-size: 100%; margin-block: .75rem 1.25rem;
+      font-variant-numeric: tabular-nums; font-size: .95rem; }
+    caption { text-align: start; font-weight: 700; padding-block: .5rem; }
+    th, td { border-block-end: 1px solid var(--line); text-align: start;
+      vertical-align: top; padding: .55rem clamp(.25rem, 1.2vw, .8rem); }
+    th { background: var(--tint); }
+    label { display: block; margin-block: .65rem .35rem; }
+    textarea, input, select, button { font: inherit; color: inherit; }
+    textarea { display: block; inline-size: 100%; min-block-size: 5rem; padding: .75rem;
+      resize: vertical; background: #fbfdfb; border: 1px solid #758b84; border-radius: .3rem; }
+    input, select { max-inline-size: 100%; }
+    button, select, input[type=file]::file-selector-button { border-radius: .3rem; min-block-size: 2.75rem; }
+    button, input[type=file]::file-selector-button { background: var(--accent); color: white;
+      padding: .4rem .8rem; border: 1px solid var(--accent); cursor: pointer; }
+    button:hover, input[type=file]::file-selector-button:hover { background: #084d43; }
+    button:disabled { color: #52605a; background: #e5ebe6; border-color: var(--line); cursor: default; }
+    select { padding-inline: .5rem; background: white; }
+    details { margin-block: 1rem; border-inline-start: .22rem solid #6a9e88;
+      padding: .6rem 1rem; background: #f1f6f2; }
+    summary { cursor: pointer; font-weight: 650; padding-block: .35rem; }
+    details[open] > summary { margin-block-end: .75rem; }
+    fieldset { min-inline-size: 0; margin-block: 1rem; border: 1px solid var(--line); padding: .75rem; }
+    legend { font-weight: 650; }
+    .notes-actions { margin-block: 1rem; }
+    [role=status] { color: var(--muted); }
+    [hidden] { display: none !important; }
+    @media (max-width: 48rem) {
+      .layout { grid-template-columns: minmax(0,1fr); padding-block-start: 1rem; }
+      nav ul { display: flex; gap: .2rem 1.2rem; flex-wrap: wrap; }
+      nav li { margin: 0; }
+    }
+
+    .round + .round { border-block-start: 1px solid var(--line); margin-block-start: 2rem; }
+    blockquote { margin: 1rem 0; padding: .3rem 1rem; border-inline-start: .2rem solid var(--accent); }
+    .report-controls { display: flex; flex-wrap: wrap; gap: .6rem; }
+    .report-stats { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); max-inline-size: 34rem; }
+    .report-stats dt, .report-stats dd { margin: 0; padding: .35rem; border-block-end: 1px solid var(--line); }
+    .report-stats dd { font-variant-numeric: tabular-nums; }
+    @media (max-width: 30rem) { .table-wrap { overflow-x: auto; } }
+    @media print {
+      :root, .mast, main > section, details { color: black; background: white; }
+      .mast .intro, .brand { color: black; }
+      .layout { display: block; padding: 0; }
+      .mast .wrap, .wrap, main > section { padding: .5rem; border: 0; }
+      nav, .skip, button, input[type=file] { display: none; }
+      h2, h3, caption { break-after: avoid; }
+      tr { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main" data-key="nav.skip">Skip to the exercise</a>
+  <header class="mast">
+    <div class="wrap">
+      <p class="brand" data-key="page.brand">PCA Lab</p>
+      <h1 data-key="page.heading">Your first on-call handoff</h1>
+      <p class="intro" data-key="page.intro">A web service has slowed down. Use the measurements to explain what changed and ask a teammate for one specific check.</p>
+    </div>
+  </header>
+  <div class="layout wrap">
+    <nav aria-labelledby="nav-heading">
+      <h2 id="nav-heading" data-key="nav.heading">On this page</h2>
+      <ul>
+        <li><a href="#lesson" data-key="nav.lesson">Incident exercise</a></li>
+        <li><a href="#guide" data-key="nav.facilitator">Facilitator guide</a></li>
+        <li><a href="#reports" data-key="nav.reports">Explore a lab report</a></li>
+      </ul>
+      <p><a href="translation-guide.html" data-key="nav.translation">Translation guide and terminology</a></p>
+    </nav>
+    <main id="main" tabindex="-1">
+<section id="lesson" aria-labelledby="lesson-title">
+  <h2 id="lesson-title" data-key="lesson.title">Practice the handoff</h2>
+  <p data-key="lesson.context">Allow about 15 minutes. The evidence comes from a lab run with simulated requests. You can speak or write your answers.</p>
+  <p data-key="lesson.pair">With a partner, choose a responder and a teammate who will receive the handoff. Give the newer responder time to answer first. Switch roles in round 2. If you work at different times, exchange written responses after each round.</p>
+  <p data-key="lesson.solo">On your own, say or write your first response before reading the next round. In round 2, answer as the teammate receiving the handoff. You can pause between rounds or ask someone for help.</p>
+  <section class="round" id="round-1" aria-labelledby="round-1-title">
+    <h3 id="round-1-title" data-key="lesson.r1.title">Round 1. What changed for people using the service?</h3>
+    <p data-key="lesson.r1.measurements">Two checks estimated the service’s p95 request time. The first estimate was about 24 milliseconds (ms). The second was about 483 ms. Each check used requests from the previous 30 seconds.</p>
+    <p data-key="lesson.r1.definition">Imagine 100 requests in that second window. Roughly 95 finished in 483 ms or less. The service groups request times into ranges, so the p95 value is an estimate.</p>
+    <p data-key="lesson.r1.update">Give your teammate one sentence about the slower requests. What would you still want to know about someone trying to complete a task?</p>
+    <p data-key="lesson.r1.predict">A detector learned how the service’s measurements usually change together. Before looking at the scores, predict whether it will flag the change. If you need another measurement to decide, name it and explain why.</p>
+    <label for="prediction" data-key="lesson.r1.notes">Your update and prediction</label>
+    <textarea id="prediction" name="prediction" dir="auto" rows="3"></textarea>
+  </section>
+  <section class="round" id="round-2" aria-labelledby="round-2-title">
+    <h3 id="round-2-title" data-key="lesson.r2.title">Round 2. What does the detector add?</h3>
+    <p data-key="lesson.r2.model">The detector uses principal component analysis (PCA). It learned a pattern from an earlier set of measurements called the baseline. Its score measures how far a new combination of measurements falls from that pattern. The score has no time units.</p>
+    <p data-key="lesson.r2.threshold">The detector flagged scores above a threshold of about 1.102. The biggest contributor is the measurement that accounts for the largest part of the difference from the learned pattern.</p>
+    <div class="table-wrap">
+      <table>
+        <caption data-key="lesson.r2.caption">Four selected samples in time order. Times are in UTC to the second. Scores are rounded.</caption>
+        <thead><tr><th scope="col" data-key="lesson.r2.time">Time (UTC)</th><th scope="col" data-key="lesson.r2.score">Score</th><th scope="col" data-key="lesson.r2.flag">Flagged?</th><th scope="col" data-key="lesson.r2.contributor">Biggest contributor</th></tr></thead>
+        <tbody>
+          <tr><th scope="row" dir="ltr" data-key="lesson.r2.time1">00:18:33</th><td dir="ltr" data-key="lesson.r2.score1">0.363</td><td data-key="lesson.r2.no">No</td><td data-key="lesson.r2.error">Fraction of requests that returned errors</td></tr>
+          <tr><th scope="row" dir="ltr" data-key="lesson.r2.time2">00:18:38</th><td dir="ltr" data-key="lesson.r2.score2">131.793</td><td data-key="lesson.r2.yes1">Yes</td><td data-key="lesson.r2.mean">Average request time</td></tr>
+          <tr><th scope="row" dir="ltr" data-key="lesson.r2.time3">00:18:43</th><td dir="ltr" data-key="lesson.r2.score3">117,321.909</td><td data-key="lesson.r2.yes2">Yes</td><td data-key="lesson.r2.p95a">P95 request time</td></tr>
+          <tr><th scope="row" dir="ltr" data-key="lesson.r2.time4">00:19:13</th><td dir="ltr" data-key="lesson.r2.score4">279,907.366</td><td data-key="lesson.r2.yes3">Yes</td><td data-key="lesson.r2.p95b">P95 request time</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p data-key="lesson.r2.readout">The first sample was below the threshold. Five seconds later, the score crossed it. Average request time contributed most at that crossing. P95 request time contributed most at the next displayed sample and at the final sample.</p>
+    <p data-key="lesson.r2.switch">Switch roles now. The new responder names what to investigate first and one other explanation that fits the readings. The teammate asks, “What could you check next, and what result would make you call someone now?” On your own, answer both parts.</p>
+  </section>
+  <section class="round" id="round-3" aria-labelledby="round-3-title">
+    <h3 id="round-3-title" data-key="lesson.r3.title">Round 3. Give the next responder a handoff</h3>
+    <p data-key="lesson.r3.prompt">Give your handoff before opening the facilitator guide. You can use these sentences to start.</p>
+    <ul>
+      <li data-key="lesson.r3.observe">“I observed ___. This suggests ___.”</li>
+      <li data-key="lesson.r3.uncertain">“I still need to find out ___.”</li>
+      <li data-key="lesson.r3.check">“I’ll ask ___ to check ___. If they find ___, I would ___.”</li>
+    </ul>
+    <label for="handoff" data-key="lesson.r3.handoff">Your handoff to the next responder</label>
+    <textarea id="handoff" name="handoff" dir="auto" rows="4"></textarea>
+    <p data-key="lesson.r3.pageQuestion">Would you use every future threshold crossing to wake the person on call? Explain your decision. What evidence would change it?</p>
+    <label for="paging" data-key="lesson.r3.paging">Your paging decision and reason</label>
+    <textarea id="paging" name="paging" dir="auto" rows="3"></textarea>
+    <p data-key="lesson.r3.compare">After you decide, open the guide below. Compare your handoff with the examples. Choose one phrase to keep and one to revise. You can edit your notes here.</p>
+  </section>
+  <div class="notes-actions">
+    <p data-key="notes.help">Save a copy of your answers before you close this page.</p>
+    <button id="download-notes" type="button" hidden data-key="notes.save">Download notes as text</button>
+    <p id="notes-feedback" role="status"></p>
+    <template id="notes-empty" data-key="notes.empty">Enter a response before you download your notes.</template>
+    <template id="notes-downloaded" data-key="notes.done">The notes file is ready to save.</template>
+    <noscript><p data-key="notes.noscript">Copy your answers into a text file to save them.</p></noscript>
+  </div>
+</section>
+<section id="guide" aria-labelledby="guide-title">
+  <h2 id="guide-title" data-key="guide.title">Facilitator guide and feedback</h2>
+  <details>
+    <summary data-key="guide.open">Open the guide to review the exercise</summary>
+    <h3 data-key="guide.coach">Prompts for each round</h3>
+    <p data-key="guide.pace">Offer speaking or writing and let the learner set the pace. Give the newer responder the first turn. A successful handoff gives the next person enough information to act. Naming the cause is optional.</p>
+    <ol>
+      <li data-key="guide.r1">Ask what someone waiting for a slower request might notice. If the learner says every request took 483 ms, ask how they would describe the second reading using 100 requests. Let them revise their answer.</li>
+      <li data-key="guide.r2">Switch roles at the score table. Ask which reading describes a wait in milliseconds and whether it tells us one person’s wait. A dependency could be slow, or requests could be waiting inside the app. What check would distinguish those explanations?</li>
+      <li data-key="guide.r3">Receive the handoff. Ask which task to check, over which time interval, and what result would change the response. Give the learner time to decide before discussing the recording.</li>
+    </ol>
+    <h3 data-key="guide.result">What happened in the recording?</h3>
+    <p data-key="guide.fault">The experimenter added 300 ms of delay to the app for about 33 seconds while simulated requests continued. Then they removed the delay. The detector flagged all seven samples labeled with the fault. Those seven samples describe one slowdown.</p>
+    <p data-key="guide.lookback">The 24 ms and 483 ms estimates came from separate checks of the service’s latency histogram. Each used a 30-second window. The detector’s request-time measurements used one-minute windows.</p>
+    <div class="table-wrap">
+      <table>
+        <caption data-key="guide.caption">All 32 samples in the saved analysis, taken five seconds apart</caption>
+        <thead><tr><th scope="col" data-key="guide.part">Part of the run</th><th scope="col" data-key="guide.samples">Samples</th><th scope="col" data-key="guide.flagged">Flagged</th></tr></thead>
+        <tbody>
+          <tr><th scope="row" data-key="guide.baseline">Baseline used to train the model and set the threshold</th><td data-key="guide.baselineCount">22</td><td data-key="guide.baselineFlags">1</td></tr>
+          <tr><th scope="row" data-key="guide.heldout">Normal period reserved for evaluation</th><td data-key="guide.heldoutCount">2</td><td data-key="guide.heldoutFlags">0</td></tr>
+          <tr><th scope="row" data-key="guide.labeled">Samples labeled with the delay</th><td data-key="guide.labeledCount">7</td><td data-key="guide.labeledFlags">7</td></tr>
+          <tr><th scope="row" data-key="guide.after">First sample after the fault label cleared</th><td data-key="guide.afterCount">1</td><td data-key="guide.afterFlags">1</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p data-key="guide.account">The detector flagged one of 22 training samples, neither of the two normal evaluation samples, all seven samples during the delay, and the one sample immediately afterward.</p>
+    <p data-key="guide.recovery">At 00:19:13 UTC, the fault label had cleared. The previous minute still included slow requests. The evaluation allows time for recovery and excludes this sample from the normal count. The recording ends here. Ask for newer request times to check recovery.</p>
+    <h3 data-key="guide.compare">Compare two possible handoffs</h3>
+    <blockquote><p data-key="guide.handoff1">“P95 request time rose from about 24 to 483 ms. I don’t know whether people can complete the main task now. I’ll ask the service owner to check recent completion rates and response times for that task. If it is still slow or failing, I’ll call the on-call lead.”</p></blockquote>
+    <blockquote><p data-key="guide.handoff2">“The slower requests took longer, and request time contributed most when the detector flagged the change. I’ll ask my on-call partner for help now. Together we’ll check whether people can complete the main task. If completions have dropped, we’ll involve the service owner.”</p></blockquote>
+    <p data-key="guide.urgency">One responder asks the service owner to verify impact. The other brings in a partner immediately to help check it. Ask what evidence and urgency informed the learner’s choice.</p>
+    <h3 data-key="guide.feedback">Give feedback on the handoff</h3>
+    <p data-key="guide.quote">Quote one phrase from the learner’s handoff. Use these questions to invite one specific revision. Working alone, read your revised handoff as the person receiving it.</p>
+    <ul>
+      <li data-key="guide.evidence">Evidence. Which measurement changed, by how much, and in what units?</li>
+      <li data-key="guide.uncertainty">Uncertainty. What still needs checking about the cause, current recovery, or people’s ability to complete a task?</li>
+      <li data-key="guide.action">Action. Who will check what, and which finding would prompt them to call for help?</li>
+    </ul>
+    <h3 data-key="guide.paging">Discuss the paging decision</h3>
+    <p data-key="guide.policy">One possible decision is to keep the score on the dashboard for now. The detector caught one slowdown. Only two normal samples were reserved for evaluation. Before using it to wake someone, check a longer healthy period and ordinary deployments for unnecessary alerts. Replay other incidents to see whether it gives responders enough time to help.</p>
+    <p data-key="guide.cost">Ask the learner to name one comparison they would make and one cost they would consider, such as waking someone during a healthy deployment or missing a slowdown that stops people from completing a task.</p>
+    <p><a href="../evidence/scores.csv" data-key="guide.sourceScores">Recorded samples and fault labels (CSV)</a> · <a href="../evidence/summary.json" data-key="guide.sourceSummary">Recorded run summary (JSON)</a></p>
+  </details>
+</section>
+<section id="reports" aria-labelledby="report-title">
+  <h2 id="report-title" data-key="report.title">Explore your report</h2>
+  <p data-key="report.intro">Open either file from your reports folder. Your browser reads each file locally. To compare the two, choose files from the same run.</p>
+
+  <p data-key="report.filesHelp">After you run the lab analysis, open the files it creates in the reports folder. You can also use the two example files supplied with this lesson.</p>
+  <p><a href="../evidence/scores.csv" download data-key="report.exampleScores">Save the example scores file</a> · <a href="../evidence/summary.json" download data-key="report.exampleSummary">Save the example summary file</a></p>
+  <noscript><p data-key="report.noScript">Enable JavaScript to read a report here. You can complete the recorded exercise above with JavaScript off.</p></noscript>
+  <div id="report-inputs" hidden>
+  <h3 data-key="report.scoresTitle">Inspect individual samples</h3>
+  <p data-key="report.scoresHelp">Find a flagged sample and read its top contributor. Check that metric in raw_metrics.png at the same time. The contributor shows which metric added the most squared error.</p>
+  <label for="report-csv" data-key="report.chooseCsv">Choose scores.csv (up to 4 MiB)</label>
+  <input id="report-csv" type="file" accept=".csv,text/csv">
+  <p id="report-csv-status" role="status" aria-live="polite" aria-atomic="true"></p>
+  <div id="report-csv-view" hidden>
+    <label><input id="report-flagged" type="checkbox"> <span data-key="report.filter">Show flagged samples only</span></label>
+    <div class="table-wrap">
+      <table>
+        <caption data-key="report.scoresCaption">Samples in file order</caption>
+        <thead><tr>
+          <th scope="col" data-key="report.time">Time (UTC)</th>
+          <th scope="col" data-key="report.error">Reconstruction error</th>
+          <th scope="col" data-key="report.flag">Flagged?</th>
+          <th scope="col" data-key="report.contributor">Top contributor</th>
+          <th scope="col" data-key="report.labels">Active fault labels</th>
+        </tr></thead>
+        <tbody id="report-scores-body"></tbody>
+      </table>
+    </div>
+    <div class="report-controls">
+      <button id="report-previous" type="button" data-key="report.previous">Previous samples</button>
+      <button id="report-next" type="button" data-key="report.next">Next samples</button>
+    </div>
+  </div>
+
+  <h3 data-key="report.summaryTitle">Compare detection windows</h3>
+  <p data-key="report.summaryHelp">Read the sample count beside each flagged percentage. A result of 100% in a short fault window can describe just a few samples.</p>
+  <label for="report-json" data-key="report.chooseJson">Choose summary.json (up to 256 KiB)</label>
+  <input id="report-json" type="file" accept=".json,application/json">
+  <p id="report-json-status" role="status" aria-live="polite" aria-atomic="true"></p>
+  <div id="report-json-view" hidden>
+    <dl class="report-stats">
+      <dt data-key="report.source">Data source</dt><dd id="report-source"></dd>
+      <dt data-key="report.rows">Samples</dt><dd id="report-rows"></dd>
+      <dt data-key="report.k">Components kept</dt><dd id="report-k"></dd>
+      <dt data-key="report.variance">Baseline variance kept</dt><dd id="report-variance"></dd>
+      <dt data-key="report.threshold">Error threshold</dt><dd id="report-threshold"></dd>
+    </dl>
+    <div class="table-wrap">
+      <table>
+        <caption data-key="report.detectionCaption">Flagged samples by window</caption>
+        <thead><tr>
+          <th scope="col" data-key="report.window">Window</th>
+          <th scope="col" data-key="report.count">Sample count</th>
+          <th scope="col" data-key="report.rate">Flagged percentage</th>
+        </tr></thead>
+        <tbody id="report-detection-body"></tbody>
+      </table>
+    </div>
+  </div>
+  </div>
+  <template id="report-text">
+    <span data-key="report.yes">Yes</span>
+    <span data-key="report.no">No</span>
+    <span data-key="report.none">None</span>
+    <span data-key="report.loading">Reading the file…</span>
+    <span data-key="report.readError">Your browser could not read this file. Select it again.</span>
+    <span data-key="report.csvSize">Choose a scores file of 4 MiB or less.</span>
+    <span data-key="report.jsonSize">Choose a summary file of 256 KiB or less.</span>
+    <span data-key="report.csvInvalid">This file could not be read as a lab scores report. Choose scores.csv from a completed run.</span>
+    <span data-key="report.csvRows">This viewer supports up to 50,000 samples per scores file.</span>
+    <span data-key="report.jsonInvalid">This file could not be read as a lab summary. Choose summary.json from a completed run.</span>
+    <span data-key="report.csvStatus">{flagged} of {total} samples flagged. Showing {start}–{end} of {matches} matching samples.</span>
+    <span data-key="report.noMatches">No samples were flagged in this file. Clear the filter to see all {total} samples.</span>
+    <span data-key="report.jsonStatus">Summary loaded. Detection windows: {count}.</span>
+  </template>
+</section>
+<script>
+(() => {
+  'use strict';
+  const root = document.getElementById('reports');
+  const el = id => root.querySelector('#report-' + id);
+  const messages = el('text').content;
+  function message(key, values = {}) {
+    return messages.querySelector('[data-key="report.' + key + '"]').textContent
+      .replace(/\{(\w+)\}/g, (token, name) => values[name] ?? token);
+  }
+  el('inputs').hidden = false;
+  const locale = () => document.documentElement.lang || undefined;
+  const number = (value, options) => new Intl.NumberFormat(locale(), options).format(value);
+  const scoreNumber = value => number(value, { maximumSignificantDigits: 6 });
+  const percent = value => number(value, { style: 'percent', maximumFractionDigits: 2 });
+  const integer = value => Number.isSafeInteger(value) && value >= 0;
+  const ratio = value => Number.isFinite(value) && value >= 0 && value <= 1;
+  const validText = value => typeof value === 'string' && value.trim().length > 0 && value.length <= 256;
+  const pageSize = 10;
+  let scores = [], flagged = [], summary = null, page = 0;
+  function setStatus(kind, key, values) {
+    el(kind + '-status').textContent = key ? message(key, values) : '';
+  }
+  function addRow(body, values) {
+    const row = body.insertRow();
+    values.forEach(value => { const cell = row.insertCell(); cell.dir = 'auto'; cell.textContent = value; });
+  }
+  function requireValue(condition, key) {
+    if (!condition) throw new Error(key);
+  }
+  function csvFields(line) {
+    // The CLI writes one sample per line. Handle escaped quotes and quoted commas.
+    const fields = [];
+    const field = /(?:"((?:[^"]|"")*)"|([^",]*))(?=,|$)/y;
+    let position = 0;
+    while (true) {
+      requireValue(fields.length < 512, 'csvInvalid');
+      field.lastIndex = position;
+      const match = field.exec(line);
+      requireValue(match, 'csvInvalid');
+      fields.push(match[1] === undefined ? match[2] : match[1].replace(/""/g, '"'));
+      if (field.lastIndex === line.length) return fields;
+      position = field.lastIndex + 1;
+    }
+  }
+  function parseTime(value) {
+    const parts = /^(\d{4}-\d\d-\d\d)[ T](\d\d:\d\d:\d\d)(?:\.(\d{1,9}))?(Z|[+-]\d\d:\d\d)$/.exec(value);
+    if (!parts) return NaN;
+    const millis = (parts[3] || '').padEnd(3, '0').slice(0, 3);
+    return Date.parse(parts[1] + 'T' + parts[2] + '.' + millis + parts[4]);
+  }
+  function parseScores(text) {
+    const lines = text.replace(/^\uFEFF/, '').trimEnd().split(/\r?\n/);
+    requireValue(lines.length >= 2, 'csvInvalid');
+    requireValue(lines.length <= 50001, 'csvRows');
+    const header = csvFields(lines[0]);
+    const [err, top, anomaly] = ['recon_error', 'top_contributor', 'anomaly'].map(key => header.indexOf(key));
+    requireValue(Math.min(err, top, anomaly) > 0 && new Set(header).size === header.length, 'csvInvalid');
+    const faultColumns = header.map((name, i) => ({ name, i })).filter(col => col.name.startsWith('fault_'));
+    return lines.slice(1).map(line => {
+      const fields = csvFields(line);
+      requireValue(fields.length === header.length, 'csvInvalid');
+      const time = parseTime(fields[0]);
+      const rawError = fields[err].trim();
+      const error = Number(rawError);
+      const flag = fields[anomaly].toLowerCase();
+      requireValue(Number.isFinite(time) && /^\+?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(rawError)
+        && Number.isFinite(error) && error >= 0 && validText(fields[top])
+        && (flag === 'true' || flag === 'false'), 'csvInvalid');
+      const faults = faultColumns.filter(col => {
+        requireValue(/^[01]$/.test(fields[col.i]), 'csvInvalid');
+        return fields[col.i] === '1';
+      }).map(col => col.name);
+      return { time, error, flagged: flag === 'true', top: fields[top], faults };
+    });
+  }
+  function parseSummary(text) {
+    const data = JSON.parse(text.replace(/^\uFEFF/, ''));
+    requireValue(data && validText(data.source) && integer(data.rows) && data.rows > 0
+      && integer(data.k) && data.k > 0 && Number.isFinite(data.threshold) && data.threshold >= 0
+      && Array.isArray(data.explained_variance_ratio) && data.explained_variance_ratio.length >= data.k
+      && data.explained_variance_ratio.every(ratio) && Array.isArray(data.detection)
+      && data.detection.length > 0 && data.detection.length <= 256
+      && data.detection.every(row => row && validText(row.window) && integer(row.samples)
+        && row.samples <= data.rows && ratio(row.flagged_frac)), 'jsonInvalid');
+    return data;
+  }
+  function showScores() {
+    const matches = el('flagged').checked ? flagged : scores;
+    const start = page * pageSize;
+    const end = Math.min(start + pageSize, matches.length);
+    const timeFormat = new Intl.DateTimeFormat(locale(), {
+      timeZone: 'UTC', year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3, hourCycle: 'h23'
+    });
+    const body = el('scores-body');
+    body.replaceChildren();
+    matches.slice(start, end).forEach(row => addRow(body, [
+      timeFormat.format(row.time), scoreNumber(row.error), message(row.flagged ? 'yes' : 'no'),
+      row.top, row.faults.length ? new Intl.ListFormat(locale()).format(row.faults) : message('none')
+    ]));
+    el('previous').disabled = page === 0;
+    el('next').disabled = end >= matches.length;
+    el('csv-view').hidden = false;
+    setStatus('csv', matches.length ? 'csvStatus' : 'noMatches', {
+      flagged: number(flagged.length), total: number(scores.length), start: number(start + 1),
+      end: number(end), matches: number(matches.length)
+    });
+  }
+  function showSummary() {
+    el('source').textContent = summary.source;
+    el('rows').textContent = number(summary.rows);
+    el('k').textContent = number(summary.k);
+    el('threshold').textContent = scoreNumber(summary.threshold);
+    el('variance').textContent = percent(summary.explained_variance_ratio.slice(0, summary.k).reduce((a,b) => a+b, 0));
+    const body = el('detection-body');
+    body.replaceChildren();
+    summary.detection.forEach(row => addRow(body, [row.window, number(row.samples), percent(row.flagged_frac)]));
+    el('json-view').hidden = false;
+    setStatus('json', 'jsonStatus', { count: number(summary.detection.length) });
+  }
+  function reset(kind) {
+    el(kind + '-view').hidden = true;
+    if (kind === 'csv') {
+      scores = []; flagged = []; page = 0;
+      el('flagged').checked = false;
+      el('scores-body').replaceChildren();
+    } else {
+      summary = null;
+      ['source','rows','k','threshold','variance','detection-body'].forEach(id => el(id).replaceChildren());
+    }
+    setStatus(kind, '');
+  }
+  const versions = { csv: 0, json: 0 };
+  async function readReport(kind) {
+    const version = ++versions[kind];
+    reset(kind);
+    const file = el(kind).files[0];
+    if (!file) return;
+    if (file.size > (kind === 'csv' ? 4 * 1024 * 1024 : 256 * 1024)) {
+      setStatus(kind, kind + 'Size');
+      return;
+    }
+    setStatus(kind, 'loading');
+    let contents;
+    try { contents = await file.text(); }
+    catch {
+      if (version === versions[kind]) setStatus(kind, 'readError');
+      return;
+    }
+    if (version !== versions[kind]) return;
+    try {
+      if (kind === 'csv') {
+        scores = parseScores(contents);
+        flagged = scores.filter(row => row.flagged);
+        showScores();
+      } else {
+        summary = parseSummary(contents);
+        showSummary();
+      }
+    } catch (error) {
+      reset(kind);
+      setStatus(kind, kind === 'csv' && error.message === 'csvRows' ? 'csvRows' : kind + 'Invalid');
+    }
+  }
+  ['csv', 'json'].forEach(kind => el(kind).addEventListener('change', () => readReport(kind)));
+  el('flagged').addEventListener('change', () => { page = 0; showScores(); });
+  el('previous').addEventListener('click', () => { --page; showScores(); });
+  el('next').addEventListener('click', () => { ++page; showScores(); });
+})();
+</script>
+    </main>
+  </div>
+  <script>
+    (() => {
+      const button = document.getElementById('download-notes');
+      const fields = Array.from(document.querySelectorAll('#lesson textarea'));
+      const feedback = document.getElementById('notes-feedback');
+      button.hidden = false;
+      button.addEventListener('click', () => {
+        if (!fields.some(field => field.value.trim())) {
+          feedback.textContent = document.getElementById('notes-empty').content.textContent;
+          return;
+        }
+        const notes = fields.map(field => [field.labels[0].textContent.trim(), field.value.trim()].join('\n'));
+        const blob = new Blob([notes.join('\n\n') + '\n'], {type: 'text/plain;charset=utf-8'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'on-call-notes.txt';
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+        feedback.textContent = document.getElementById('notes-downloaded').content.textContent;
+      });
+    })();
+  </script>
+</body>
+</html>
