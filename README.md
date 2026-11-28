@@ -292,7 +292,7 @@ src/sre_pca/             core.py (PCA logic), prom.py (Prometheus API), syntheti
 scripts/                 bootstrap.ps1 / bootstrap.sh, lab.ps1 / lab.sh
 tests/                   pytest. The default run is offline. `test-short` is a live 5-minute session
                          that writes `reports/short-run/` (stack must already be up)
-reports/                 analysis outputs: plots, scores.csv, summary.json
+reports/                 analysis outputs, gitignored except .gitkeep: plots, scores.csv, summary.json
 reports/runs/            one JSON manifest per load/scenario (`latest` names the newest)
 reports/short-run/       record from `test-short` (record.json, summary, scores, plots)
 ```
