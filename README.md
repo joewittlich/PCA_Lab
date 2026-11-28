@@ -173,6 +173,26 @@ If Prometheus isn't running, it uses synthetic data, so you can explore it befor
 **No Docker yet?** Run `./scripts/lab.sh synthetic` (or `uv run sre-pca --source synthetic`) and `./scripts/lab.sh test`.
 Both run on generated data.
 
+### Optional experiment: ordinary CPU at unusually low traffic
+
+Run `uv run python -m sre_pca.benchmark` for a fixed-seed, offline comparison using request rate and
+app CPU. Both detectors train on the first 60 healthy minutes. The per-metric rule flags a row if
+either value falls outside its observed baseline minimum and maximum. PCA keeps one component and
+flags reconstruction errors above the **largest baseline error**. Both rules therefore flag zero
+training rows, and their thresholds stay fixed throughout evaluation.
+
+The next 45 minutes measure false alarms under healthy traffic. During the final five minutes, the
+benchmark replays CPU readings from baseline minutes 5–10, when traffic was high, alongside the
+current, lower request rates. Each metric stays within its own baseline range during the replay.
+
+| Detector | Healthy rows flagged (false alarms) | Replay rows flagged (detections) |
+|---|---:|---:|
+| Per-metric bounds | 14/180 (7.8%) | 0/20 (0%) |
+| PCA reconstruction error | 1/180 (0.6%) | 20/20 (100%) |
+
+For this synthetic workload, a healthy high-traffic CPU reading is unusual when paired with low
+traffic. The PCA score measures how far that pairing falls from the learned relationship.
+
 ### What's in the feature matrix
 
 The analysis uses 11 descriptors, each one PromQL expression (`src/sre_pca/prom.py`, `DEFAULT_QUERIES`): request rate,
