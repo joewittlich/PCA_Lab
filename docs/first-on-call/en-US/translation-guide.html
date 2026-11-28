@@ -76,6 +76,7 @@
       </section>
       <section id="draft">
         <h2>Translate the text</h2>
+        <p>Each standalone prediction exercise has its own page and catalog. Use the same page name in the Python command and file name. For example, copy <a href="direction.strings.json">direction.strings.json</a> into the target folder, set its locale, translate its values, and run <code>python localize.py ar --dir rtl --page direction</code> for Arabic. The other catalogs are <a href="training.strings.json">training.strings.json</a> and <a href="readings.strings.json">readings.strings.json</a>. Use <code>--page training</code> or <code>--page readings</code> for those exercises. The same page option works with <code>--extract</code> and <code>--check</code>. Preserve the direction diagram’s square and diamond references so a reader can identify each sample without color.</p>
         <p>Translate the values in <code>strings.json</code>. Keep the keys. Read the neighboring messages to learn who is speaking and what the learner knows at that point. Use one familiar term for each concept, short sentences, and direct questions. Preserve choices to speak, write, work alone, or work with a partner.</p>
         <h3>Work with a translator or a language model</h3>
         <p>Give the translator the source messages for one section, its place in the lesson, the term list, and the target language tag. Ask for the same keys with translated values. For example, give this instruction for the score table:</p>

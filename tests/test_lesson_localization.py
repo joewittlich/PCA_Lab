@@ -8,7 +8,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 LESSON = Path(__file__).resolve().parents[1] / "docs" / "first-on-call"
 
 

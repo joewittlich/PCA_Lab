@@ -1,0 +1,22 @@
+{
+  "locale": "en-US",
+  "strings": {
+    "cases.baseline.tab": "A fault enters the training data | PCA Lab",
+    "cases.baseline.title": "A fault enters the training data",
+    "cases.intro": "This five-minute exercise uses generated data. A principal component analysis (PCA) model learns how CPU use and request rate change together. Its score measures how far a pair of readings falls from the learned line.",
+    "cases.roles": "With a partner, one person predicts what the model will flag. The other asks what to check for people using the service. On your own, answer both questions. Speak or write before you open the result.",
+    "cases.observe": "Read the case and make a prediction",
+    "cases.baseline.setup": "Two models train on 240 samples. For the second model, add 0.28 CPU cores to every tenth training sample. Each model learns its own line and uses its largest training error as its threshold. Test both on the same 180 healthy samples and the same 20 samples from one CPU fault.",
+    "cases.baseline.prompt": "Which model do you expect to flag the fault? A teammate wants to keep the model that sends fewer alerts. What evidence would you ask for?",
+    "cases.baseline.open": "Show the comparison and discuss the training period",
+    "cases.baseline.clean": "The original model flagged 1 of 180 healthy samples and 20 of 20 fault samples. Its threshold was about 0.089.",
+    "cases.baseline.altered": "The model trained with the added CPU use flagged 0 of 180 healthy samples and 0 of 20 fault samples. Its threshold rose to about 3.856. It missed the entire replay.",
+    "cases.baseline.debrief": "Ask the service owner what happened during training. Compare the two models on other known incidents and healthy periods before changing the alert. Which of those checks would help your teammate decide?",
+    "cases.feedback": "Discuss one observation, one uncertainty, and one check. Revise your answer if the discussion changes your decision.",
+    "cases.save": "Save your answer as text",
+    "cases.empty": "Enter an answer before saving.",
+    "cases.saved": "Your notes are ready to save.",
+    "cases.copy": "Copy your answer to a text file to save it.",
+    "cases.home": "First on-call handoff lesson"
+  }
+}

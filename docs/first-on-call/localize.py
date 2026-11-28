@@ -8,7 +8,6 @@ from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / "en-US"
 TOKEN = re.compile(r"\{[a-zA-Z][a-zA-Z0-9_]*\}")
@@ -55,7 +54,7 @@ class LessonText(HTMLParser):
 
     def translated(self, strings):
         if not isinstance(strings, dict) or strings.keys() != self.strings.keys():
-            raise ValueError("The translation must contain the same keys as en-US/strings.json.")
+            raise ValueError("The translation must contain the same keys as the source catalog.")
         pieces = []
         position = 0
         for begin, end, key in self.spans:
@@ -74,15 +73,19 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("locale", nargs="?", help="Target language folder, for example ar or zh-Hans")
     parser.add_argument("--dir", choices=("ltr", "rtl"), default="ltr", help="Text direction")
-    parser.add_argument("--force", action="store_true", help="Replace the target index.html")
+    parser.add_argument("--page", choices=("index", "direction", "training", "readings"), default="index",
+                        help="Lesson or standalone prediction exercise to translate")
+    parser.add_argument("--force", action="store_true", help="Replace the selected target page")
     source_action = parser.add_mutually_exclusive_group()
     source_action.add_argument("--check", action="store_true", help="Check the US English catalog against the lesson")
     source_action.add_argument("--extract", action="store_true", help="Rebuild the US English catalog from its keyed lesson text")
     args = parser.parse_args()
-    lesson = LessonText((SOURCE / "index.html").read_text(encoding="utf-8"))
+    page_name = f"{args.page}.html"
+    catalog_name = "strings.json" if args.page == "index" else f"{args.page}.strings.json"
+    lesson = LessonText((SOURCE / page_name).read_text(encoding="utf-8"))
     if (args.extract or args.check) and args.locale:
         parser.error("Run source catalog commands without a target locale.")
-    catalog_file = SOURCE / "strings.json"
+    catalog_file = SOURCE / catalog_name
     if args.extract:
         english = {"locale": "en-US", "strings": lesson.strings}
         catalog_file.write_text(json.dumps(english, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -99,7 +102,7 @@ def main():
         parser.error("The US English source folder is reserved.")
     target = ROOT / args.locale
     try:
-        data = json.loads((target / "strings.json").read_text(encoding="utf-8"))
+        data = json.loads((target / catalog_name).read_text(encoding="utf-8"))
         if not isinstance(data, dict) or data.get("locale") != args.locale:
             raise ValueError("The catalog locale must match the folder name.")
         output = lesson.translated(data.get("strings"))
@@ -107,11 +110,11 @@ def main():
         if output.count(source_tag) != 1:
             raise ValueError("The source HTML language tag has changed.")
         output = output.replace(source_tag, f'<html lang="{args.locale}" dir="{args.dir}">', 1)
-        with (target / "index.html").open("w" if args.force else "x", encoding="utf-8", newline="\n") as page:
+        with (target / page_name).open("w" if args.force else "x", encoding="utf-8", newline="\n") as page:
             page.write(output)
     except (ValueError, OSError) as error:
         parser.error(str(error))
-    print(target / "index.html")
+    print(target / page_name)
 
 
 if __name__ == "__main__":
