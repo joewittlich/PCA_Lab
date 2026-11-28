@@ -218,6 +218,9 @@ as your Windows/Mac CPU. Some collectors, like filesystems, will show the VM's d
   then reload with `curl -X POST localhost:9090/-/reload` (or `./scripts/lab.sh down; ./scripts/lab.sh up`). The dashboard's
   *PCA anomaly score* panel fills in, and you can alert on it with an ordinary Prometheus/Grafana alert rule such as
   `sre_pca_reconstruction_error > sre_pca_threshold for 2m`. Later, package the exporter as another Compose service.
+  To check the age of the displayed score in seconds, query `time() - sre_pca_last_scored_timestamp_seconds`.
+  The gauge is zero until the first score. It records the Prometheus query timestamp of the latest scored row
+  with finite values for all trained features. A scrape can succeed while this timestamp and the score stay unchanged.
 - **Seasonality.** With days of data, fit per time-of-day, or use `--deseason stl --period 5760` (1 day at 15 s), so
   Monday morning doesn't look like an incident.
 - **Compare detectors.** Try `IsolationForest` or a simple z-score per metric on the same standardized matrix, and Hotelling's T²
