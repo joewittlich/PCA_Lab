@@ -1,0 +1,23 @@
+{
+  "locale": "en-US",
+  "strings": {
+    "cases.direction.tab": "Same size change, different direction | PCA Lab",
+    "cases.direction.title": "Same size change, different direction",
+    "cases.intro": "This five-minute exercise uses generated data. A principal component analysis (PCA) model learns how CPU use and request rate change together. Its score measures how far a pair of readings falls from the learned line.",
+    "cases.roles": "With a partner, one person predicts what the model will flag. The other asks what to check for people using the service. On your own, answer both questions. Speak or write before you open the result.",
+    "cases.observe": "Read the case and make a prediction",
+    "cases.direction.setup": "During training, CPU use usually rose as more requests arrived. The highest training rate was 29.7 requests per second. The detector learned a line through this pattern. It flags a sample when its squared distance from the line exceeds the threshold. The threshold is about 0.089.",
+    "cases.direction.points": "Sample A has 30.6 requests per second. Sample B has 3.0 requests per second. Both use 0.307 CPU cores. After the detector scales the two measurements, each sample is the same distance from the training average.",
+    "cases.direction.prompt": "Which sample will the detector flag? Which measurements would help you decide whether to call someone about A or B?",
+    "cases.direction.open": "Show the two scores and discuss your decision",
+    "cases.direction.result": "A follows the learned line. Its score is almost zero, even though its request rate is higher than any training reading. B moves away from the training average at a right angle to the line. Its score is 6.76, so the detector flags B.",
+    "cases.direction.caption": "Direction diagram. Request rate increases to the right. CPU use increases upward. The dot is the training average. The square (A) follows the dashed training line. The diamond (B) moves away from it. The two moves have the same length.",
+    "cases.direction.debrief": "For A, check response time and remaining capacity during the extra traffic. For B, ask what else is using CPU. For either sample, ask whether people can finish their task. What finding would change your handoff?",
+    "cases.feedback": "Discuss one observation, one uncertainty, and one check. Revise your answer if the discussion changes your decision.",
+    "cases.save": "Save your answer as text",
+    "cases.empty": "Enter an answer before saving.",
+    "cases.saved": "Your notes are ready to save.",
+    "cases.copy": "Copy your answer to a text file to save it.",
+    "cases.home": "First on-call handoff lesson"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "locale": "en-US",
+  "strings": {
+    "cases.repeat.tab": "New timestamps, repeated readings | PCA Lab",
+    "cases.repeat.title": "New timestamps, repeated readings",
+    "cases.intro": "This five-minute exercise uses generated data. A principal component analysis (PCA) model learns how CPU use and request rate change together. Its score measures how far a pair of readings falls from the learned line.",
+    "cases.roles": "With a partner, one person predicts what the model will flag. The other asks what to check for people using the service. On your own, answer both questions. Speak or write before you open the result.",
+    "cases.observe": "Read the case and make a prediction",
+    "cases.repeat.setup": "A collector reports the same pair of values 20 times: about 15.74 requests per second and 0.154 CPU cores. Each sample arrives with a new timestamp, 15 seconds after the previous one. The pair came from a healthy period.",
+    "cases.repeat.prompt": "How many samples will the detector flag? What independent check could distinguish steady traffic from a sensor that stopped updating its values?",
+    "cases.repeat.open": "Show the result and discuss the next check",
+    "cases.repeat.result": "The detector flagged 0 of 20 samples. It scored each pair separately. Each score was about 0.00061. In this simulation we copied the values and gave each copy a new timestamp.",
+    "cases.repeat.debrief": "Compare the request count with a separate source, such as access logs for the same period. Check when the sensor last measured the service. What would you tell your teammate if the logs showed changing traffic?",
+    "cases.feedback": "Discuss one observation, one uncertainty, and one check. Revise your answer if the discussion changes your decision.",
+    "cases.save": "Save your answer as text",
+    "cases.empty": "Enter an answer before saving.",
+    "cases.saved": "Your notes are ready to save.",
+    "cases.copy": "Copy your answer to a text file to save it.",
+    "cases.home": "First on-call handoff lesson"
+  }
+}

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en-US" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-key="cases.baseline.tab">A fault enters the training data | PCA Lab</title>
+  <style>
+    :root { color-scheme: light; font: 1.05rem/1.6 "Source Sans 3", "Segoe UI", sans-serif; color: #18313b; background: #f3f6f3; }
+    * { box-sizing: border-box; }
+    body { margin: 0; overflow-wrap: anywhere; }
+    main { max-inline-size: 48rem; margin-inline: auto; background: white; padding: clamp(1rem, 4vw, 3rem); border-block-start: .5rem solid #086355; }
+    h1 { font: 500 clamp(2rem, 6vw, 3rem)/1.15 Georgia, serif; margin-block: .3rem 1rem; }
+    h2 { font-size: 1.25rem; line-height: 1.3; }
+    p, label, figcaption { max-inline-size: 66ch; }
+    label, summary { font-weight: 650; }
+    label, textarea { display: block; }
+    textarea { width: 100%; min-height: 6rem; margin-block: .5rem 1rem; padding: .6rem; font: inherit; resize: vertical; }
+    details { margin-block: 1rem; padding: .65rem 1rem; background: #eef5ee; border-inline-start: .22rem solid #086355; }
+    summary { cursor: pointer; padding-block: .35rem; }
+    a { color: #075a50; }
+    button { background: #086355; color: white; border: 0; border-radius: .3rem; font: inherit; padding: .5rem 1rem; cursor: pointer; }
+    :focus-visible { outline: .2rem solid #9a4800; outline-offset: .18rem; }
+    figure { margin: 1rem 0; }
+    svg { width: min(100%, 20rem); height: auto; display: block; }
+    footer { border-block-start: 1px solid #abbbb5; margin-block-start: 2rem; padding-block-start: .75rem; }
+    @media print { main { margin: 0; padding: 0; } button, footer { display: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 data-key="cases.baseline.title">A fault enters the training data</h1>
+    <p data-key="cases.intro">This five-minute exercise uses generated data. A principal component analysis (PCA) model learns how CPU use and request rate change together. Its score measures how far a pair of readings falls from the learned line.</p>
+    <p data-key="cases.roles">With a partner, one person predicts what the model will flag. The other asks what to check for people using the service. On your own, answer both questions. Speak or write before you open the result.</p>
+    <h2 data-key="cases.observe">Read the case and make a prediction</h2>
+    <p data-key="cases.baseline.setup">Two models train on 240 samples. For the second model, add 0.28 CPU cores to every tenth training sample. Each model learns its own line and uses its largest training error as its threshold. Test both on the same 180 healthy samples and the same 20 samples from one CPU fault.</p>
+    <label for="baseline-answer" data-key="cases.baseline.prompt">Which model do you expect to flag the fault? A teammate wants to keep the model that sends fewer alerts. What evidence would you ask for?</label>
+    <textarea id="baseline-answer" dir="auto" rows="3"></textarea>
+    <details>
+      <summary data-key="cases.baseline.open">Show the comparison and discuss the training period</summary>
+      <p data-key="cases.baseline.clean">The original model flagged 1 of 180 healthy samples and 20 of 20 fault samples. Its threshold was about 0.089.</p>
+      <p data-key="cases.baseline.altered">The model trained with the added CPU use flagged 0 of 180 healthy samples and 0 of 20 fault samples. Its threshold rose to about 3.856. It missed the entire replay.</p>
+      <p data-key="cases.baseline.debrief">Ask the service owner what happened during training. Compare the two models on other known incidents and healthy periods before changing the alert. Which of those checks would help your teammate decide?</p>
+    </details>
+    <p data-key="cases.feedback">Discuss one observation, one uncertainty, and one check. Revise your answer if the discussion changes your decision.</p>
+    <button type="button" hidden data-key="cases.save">Save your answer as text</button>
+    <p role="status"></p>
+    <template id="empty" data-key="cases.empty">Enter an answer before saving.</template>
+    <template id="saved" data-key="cases.saved">Your notes are ready to save.</template>
+    <noscript><p data-key="cases.copy">Copy your answer to a text file to save it.</p></noscript>
+    <footer><a href="index.html" data-key="cases.home">First on-call handoff lesson</a></footer>
+  </main>
+  <script>
+    const field = document.querySelector('textarea');
+    const save = document.querySelector('button');
+    const feedback = document.querySelector('[role=status]');
+    save.hidden = false;
+    save.addEventListener('click', () => {
+      if (!field.value.trim()) {
+        feedback.textContent = document.querySelector('#empty').content.textContent;
+        field.focus();
+        return;
+      }
+      const notes = [document.title, field.labels[0].textContent, field.value.trim()].join('\n\n');
+      const url = URL.createObjectURL(new Blob([notes + '\n'], {type: 'text/plain;charset=utf-8'}));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = field.id + '.txt';
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      feedback.textContent = document.querySelector('#saved').content.textContent;
+    });
+  </script>
+</body>
+</html>
