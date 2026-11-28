@@ -1,0 +1,119 @@
+{
+  "locale": "en-US",
+  "terms": {
+    "on_call": {
+      "preferred": "on call",
+      "meaning": "Assigned to respond when a service may need help.",
+      "context": "Use the local term for a duty rotation. In US English, use on-call before a noun, as in on-call lead.",
+      "machine_tokens": []
+    },
+    "handoff": {
+      "preferred": "handoff",
+      "meaning": "A short update that helps the next responder decide what to do.",
+      "context": "The learner gives an observation, an uncertainty, a person to ask, and a check whose result could change the response. The update can be spoken or written.",
+      "machine_tokens": []
+    },
+    "request": {
+      "preferred": "request",
+      "meaning": "One call to the web service.",
+      "context": "One user task can involve several requests. The lab sent simulated requests.",
+      "machine_tokens": []
+    },
+    "latency": {
+      "preferred": "request time",
+      "meaning": "How long the service takes to respond to a request.",
+      "context": "Latency is the technical term here. Use a familiar local expression for elapsed time. Keep the units with every duration.",
+      "machine_tokens": []
+    },
+    "p95": {
+      "preferred": "p95 request time",
+      "meaning": "An estimate of the time within which roughly 95 out of 100 requests finished.",
+      "context": "p95 means the 95th percentile. Keep the estimate and its time window. The two spot readings used 30 seconds. The detector's latency measurements used one minute.",
+      "machine_tokens": ["lat_p95"]
+    },
+    "mean_request_time": {
+      "preferred": "average request time",
+      "meaning": "The sum of request times divided by the number of requests in the window.",
+      "context": "Average means arithmetic mean here. At the first crossing shown in the learner's table, this measurement contributed most.",
+      "machine_tokens": ["lat_mean"]
+    },
+    "error_fraction": {
+      "preferred": "fraction of requests that returned errors",
+      "meaning": "The share of requests with a server error response in the measurement window.",
+      "context": "The lab counts HTTP 5xx responses. This measurement contributed most to the first sample shown in the learner's table.",
+      "machine_tokens": ["error_ratio"]
+    },
+    "measurement_window": {
+      "preferred": "measurement window",
+      "meaning": "The interval of recent data used to calculate a measurement.",
+      "context": "A window can still include slow requests after the added delay ends. Say how far back the calculation looks.",
+      "machine_tokens": []
+    },
+    "sample": {
+      "preferred": "sample",
+      "meaning": "One set of measurements at one time in the recording.",
+      "context": "Use a term for a single observation. Seven samples with the latency fault label came from one slowdown.",
+      "machine_tokens": ["samples"]
+    },
+    "pca": {
+      "preferred": "principal component analysis",
+      "meaning": "A method that summarizes how measurements vary together using a smaller set of components.",
+      "context": "Introduce the name and abbreviation PCA together. In this lab the detector uses the baseline pattern to estimate each new set of measurements.",
+      "machine_tokens": []
+    },
+    "baseline": {
+      "preferred": "baseline",
+      "meaning": "The earlier samples used to fit the model and set its threshold.",
+      "context": "Use a term for training data. One of the 22 baseline samples exceeded the threshold.",
+      "machine_tokens": ["baseline (train)"]
+    },
+    "held_out": {
+      "preferred": "held-out normal samples",
+      "meaning": "Normal samples kept separate from training and used to evaluate the detector.",
+      "context": "The evaluator also excludes a short period after the fault. Two samples counted as held-out normal in this recording.",
+      "machine_tokens": ["normal (held-out)"]
+    },
+    "score": {
+      "preferred": "score",
+      "meaning": "A number that measures the mismatch between the observed measurements and the model's estimates.",
+      "context": "The score adds squared differences after standardization. It has no time units. Larger values mean a larger mismatch.",
+      "machine_tokens": ["recon_error"]
+    },
+    "threshold": {
+      "preferred": "threshold",
+      "meaning": "The score a sample must exceed for the detector to flag it.",
+      "context": "Use strictly above. The displayed threshold of 1.102 is rounded. Classification uses the stored values at full precision.",
+      "machine_tokens": ["threshold"]
+    },
+    "flag": {
+      "preferred": "flag",
+      "meaning": "Mark a sample when its score is above the threshold.",
+      "context": "Use a verb for marking one observation. The responder makes a separate decision about contacting a person.",
+      "machine_tokens": ["anomaly"]
+    },
+    "biggest_contributor": {
+      "preferred": "biggest contributor",
+      "meaning": "The measurement that accounts for the largest part of one sample's score.",
+      "context": "It gives the responder a clue about which measurement to investigate. The cause of the slowdown needs separate evidence.",
+      "machine_tokens": ["top_contributor"]
+    },
+    "fault_label": {
+      "preferred": "fault label",
+      "meaning": "A recorded mark that shows whether a specific test fault was active at the sample time.",
+      "context": "The experimenter added a delay. The latency fault label cleared before the last sample, which the detector still flagged.",
+      "machine_tokens": ["fault_latency"]
+    },
+    "page": {
+      "preferred": "page",
+      "meaning": "Send an urgent notification that asks the person on call to respond.",
+      "context": "Choose a term for contacting a person who may be asleep. The question about paging asks for a policy for future crossings.",
+      "machine_tokens": []
+    },
+    "escalation": {
+      "preferred": "ask for help",
+      "meaning": "Bring another person into the response when their help is needed.",
+      "context": "Use a familiar role name, such as service owner or on-call lead. Keep the link between a check result and the decision to contact someone.",
+      "machine_tokens": []
+    }
+  }
+}

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en-US" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Translate the first on-call handoff lesson</title>
+  <style>
+    :root { color-scheme: light; font: 100%/1.6 system-ui, sans-serif; color: #192c36; background: #fff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    .page { max-inline-size: 50rem; margin-inline: auto; padding: 1.25rem clamp(1rem, 4vw, 2.5rem) 3rem; }
+    h1, h2, h3 { line-height: 1.25; text-wrap: balance; }
+    h1 { font-size: clamp(2rem, 5vw, 2.9rem); margin-block: 1.2rem .6rem; }
+    h2 { margin-block: 2.2rem .7rem; border-block-start: 1px solid #b2bec1; padding-block-start: 1rem; }
+    h3 { margin-block: 1.2rem .35rem; font-size: 1.1rem; }
+    p { margin-block: .5rem .85rem; }
+    a { color: #06535e; text-underline-offset: .18em; }
+    a:focus-visible { outline: 3px solid #8b3500; outline-offset: 3px; }
+    nav ul { display: flex; flex-wrap: wrap; gap: .4rem 1.5rem; list-style: none; padding: 0; }
+    li { margin-block: .45rem; }
+    ol, ul { padding-inline-start: 1.55rem; }
+    code { font: .94em/1.5 ui-monospace, monospace; overflow-wrap: anywhere; }
+    dt { font-weight: 700; margin-block-start: .8rem; }
+    dd { margin-inline-start: 0; }
+    blockquote { margin: .75rem 0; padding: .35rem 1rem; border-inline-start: .25rem solid #26707a; background: #eef6f6; }
+    .skip { position: absolute; inset-inline-start: .5rem; inset-block-start: .5rem; padding: .5rem; background: white; }
+    .skip:not(:focus) { clip-path: inset(50%); inline-size: 1px; block-size: 1px; overflow: hidden; }
+    @media print { .skip, nav { display: none; } .page { max-inline-size: none; padding: 0; } h2, dt { break-after: avoid; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to translation instructions</a>
+  <div class="page">
+    <header>
+      <a href="index.html">Open the lesson</a>
+      <h1>Translate the first on-call handoff lesson</h1>
+      <p>Use this guide to prepare a version that a new responder can read, discuss, and use to ask a teammate for help. The source language is US English.</p>
+      <nav aria-label="Guide sections">
+        <ul>
+          <li><a href="#files">Prepare the files</a></li>
+          <li><a href="#terms">Choose terms</a></li>
+          <li><a href="#draft">Translate the text</a></li>
+          <li><a href="#review">Review the lesson</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main id="main">
+      <section id="files">
+        <h2>Prepare the files</h2>
+        <ol>
+          <li>Read the <a href="index.html">lesson</a> once as a learner. Notice where the learner makes a prediction, gives a handoff, and opens the reveal.</li>
+          <li>Create a folder beside <code>en-US</code>. Give it a BCP 47 language tag. Use an ISO 639 language code, such as <code>ar</code> for Arabic. Add a script (ISO 15924) or region (usually ISO 3166-1) when it identifies the intended audience. For example, <code>zh-Hans</code> means Chinese written in Simplified script, and <code>en-US</code> means English as used in the United States. Join subtags with hyphens.</li>
+          <li>Copy <a href="strings.json">strings.json</a> and <a href="terminology.json">terminology.json</a> into the new folder. Set <code>locale</code> in both copies to your tag. Save the files as UTF-8. Work from the English copy for the meaning of each message.</li>
+        </ol>
+        <p>The <code>strings</code> object contains pairs. A key identifies a piece of lesson text. Its value is the text a reader sees. Each key also appears in the lesson HTML as a <code>data-key</code> attribute. Use the key to find the same text in either file.</p>
+      </section>
+      <section id="terms">
+        <h2>Choose terms a responder would use</h2>
+        <p>Open the <a href="terminology.json">full term list</a> in a text editor. Search for a concept such as <code>held_out</code>. Each concept has a preferred term, its meaning, guidance for this lesson, and any exact labels from the evidence. Keep the concept ID. In your copy, enter the accepted local wording in <code>preferred</code> and translate <code>meaning</code> and <code>context</code>. Copy <code>machine_tokens</code> exactly.</p>
+        <dl>
+          <dt>P95 request time</dt>
+          <dd>Roughly 95 out of 100 requests finished within the stated time. Keep “about” with each estimate. One user task may require several requests.</dd>
+          <dt>Baseline and held-out normal samples</dt>
+          <dd>The model learned its pattern and threshold from the baseline samples. The team reserved the held-out normal samples to check the detector afterward.</dd>
+          <dt>Principal component analysis (PCA)</dt>
+          <dd>A method for describing how measurements vary together. Introduce the full name when teaching the abbreviation.</dd>
+          <dt>Score and threshold</dt>
+          <dd>The score measures how far a sample falls from the learned pattern. It has no time units. The detector flags the sample when the score is above the threshold.</dd>
+          <dt>Flag and page</dt>
+          <dd>To flag is to mark a sample. To page is to send an urgent notification to a person. Choose two distinct verbs.</dd>
+          <dt>Biggest contributor</dt>
+          <dd>The measurement that accounts for the largest part of a sample’s score. The responder still needs evidence about the cause.</dd>
+          <dt>Handoff</dt>
+          <dd>A short update for the next responder. It gives a measured observation, explains what is uncertain, and names a check that could change the response.</dd>
+        </dl>
+      </section>
+      <section id="draft">
+        <h2>Translate the text</h2>
+        <p>Translate the values in <code>strings.json</code>. Keep the keys. Read the neighboring messages to learn who is speaking and what the learner knows at that point. Use one familiar term for each concept, short sentences, and direct questions. Preserve choices to speak, write, work alone, or work with a partner.</p>
+        <h3>Work with a translator or a language model</h3>
+        <p>Give the translator the source messages for one section, its place in the lesson, the term list, and the target language tag. Ask for the same keys with translated values. For example, give this instruction for the score table:</p>
+        <blockquote><p>Translate the table for a new responder. Use our preferred words for “score” and “flag.” The first crossing shown occurs at 00:18:38 UTC. Preserve which measurement contributed most in each row. Keep the fault reveal for later. Mark any word choice that a local on-call responder should review in a separate note.</p></blockquote>
+        <p>Ask a second reader to explain the translation in their own words or translate it back into English. Ask which measurement contributed most at the crossing. The answer is average request time. If the reader answers p95 or says a cause was proven, revisit that row and its explanation.</p>
+        <h3>Keep the evidence traceable</h3>
+        <p>Use local number separators and date conventions in displayed text. For example, the score displayed as <bdi dir="ltr">117,321.909</bdi> has a whole-number part of 117321 and a fractional part of 909 thousandths. Keep the same value, precision, units, time order, and UTC reference. Keep the evidence CSV and JSON exactly as recorded, including column names, timestamps, decimal points, and labels such as <code>fault_latency</code>.</p>
+        <p>Keep file paths, link targets, HTML IDs, and message keys exact. If a message has a placeholder, copy its spelling and delimiters and move it where the grammar requires. A blank in a handoff starter is space for the learner’s answer. Leave room for that answer.</p>
+        <h3>Build the local page</h3>
+        <p>If you change the US English lesson, run <code>python localize.py --extract</code> in the <code>first-on-call</code> folder to update its catalog. Run <code>python localize.py --check</code> to check the catalog.</p>
+        <p>For a manual edit, copy <code>en-US/index.html</code> into the target folder. In a UTF-8 text editor, find each <code>data-key</code> and replace its text with the matching translated value. Include the browser title, links, prompts, and control labels. Preserve the HTML markup and the key itself. Escape literal <code>&lt;</code> and <code>&amp;</code> in HTML text as <code>&amp;lt;</code> and <code>&amp;amp;</code>.</p>
+        <p>Alternatively, run the included Python tool from the <code>first-on-call</code> folder. For Arabic, save the translated <code>ar/strings.json</code>, then run <code dir="ltr">python localize.py ar --dir rtl</code>. The tool writes <code>ar/index.html</code>. The default direction is <code>ltr</code>. Use <code>--force</code> only when you intend to replace an existing target page. Maintain the term list and this guide separately. If you link to a target-language guide, place that file beside its lesson.</p>
+        <p>On each translated HTML page, set <code>lang</code> on the root <code>html</code> element to the folder’s tag. Set <code>dir="rtl"</code> for Arabic or <code>dir="ltr"</code> for horizontal Simplified Chinese. Set the language on passages left in another language. Keep fixed left-to-right identifiers or timestamps together in RTL text, for example <code dir="ltr">&lt;bdi dir="ltr"&gt;00:18:38 UTC&lt;/bdi&gt;</code>. Keep CSS properties such as <code>margin-inline-start</code> so spacing follows the reading direction.</p>
+      </section>
+      <section id="review">
+        <h2>Review the lesson with a local reader</h2>
+        <ul>
+          <li>Open the target <code>index.html</code> directly from disk with the network off. Read its tab title, follow each link, and open the reveal. Check that learners can pause before the answer is visible.</li>
+          <li>Compare every target key with the English list. Check labels, names read aloud by assistive technology, and resource links in the rendered page. Keep the target string values and the HTML text in sync after any manual edit.</li>
+          <li>Ask the reader to give a handoff. Listen for a measurement with units, a statement of uncertainty, and a next check. Ask how many slowdowns the seven labeled samples represent. The recording contains one slowdown.</li>
+          <li>Use the keyboard to reach and operate the links and controls. Check that focus stays visible. Increase text size to 200% and test on a narrow screen. Read the longest prompt and follow a table row from its time to its contributor.</li>
+          <li>For an RTL translation, inspect the table order and the punctuation beside timestamps and Latin identifiers. For Chinese, Japanese, or Korean, inspect line breaks around punctuation and the display of all characters in the local system font. Check that numbers and units stay understandable when lines wrap.</li>
+        </ul>
+        <p>For details about language tags and direction, see the W3C guides to <a href="https://www.w3.org/International/articles/language-tags/">language tags</a> and <a href="https://www.w3.org/International/questions/qa-html-dir">right-to-left text in HTML</a> (online).</p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
