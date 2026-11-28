@@ -8,7 +8,6 @@ from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / "en-US"
 TOKEN = re.compile(r"\{[a-zA-Z][a-zA-Z0-9_]*\}")
