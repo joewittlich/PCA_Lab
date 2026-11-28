@@ -3,6 +3,7 @@
 Fits PCA on a recent window (assumed normal), then every --interval seconds scores the newest
 sample and exposes it at http://<host>:9105/metrics as:
   sre_pca_reconstruction_error, sre_pca_threshold, sre_pca_anomaly, sre_pca_pc_score{pc="PC1"...}
+  sre_pca_last_scored_timestamp_seconds (Unix time of the last complete input row scored)
 Uncomment the `sre-pca-anomaly` job in config/prometheus/prometheus.yml, reload Prometheus,
 and the Grafana dashboard's "PCA anomaly score" panel lights up. Alert on it like any metric.
 """
@@ -12,6 +13,7 @@ from __future__ import annotations
 import argparse
 import time
 
+import numpy as np
 from prometheus_client import Gauge, start_http_server
 
 from . import core, prom
@@ -38,21 +40,27 @@ def main(argv: list[str] | None = None) -> int:
     thr_g = Gauge("sre_pca_threshold", "Anomaly threshold (baseline quantile)")
     an_g = Gauge("sre_pca_anomaly", "1 if latest sample exceeds threshold")
     pc_g = Gauge("sre_pca_pc_score", "Latest PC score", ["pc"])
+    last_scored_g = Gauge(
+        "sre_pca_last_scored_timestamp_seconds",
+        "Unix timestamp of the last complete input row scored, or 0 before the first score",
+    )
     if not a.once:
         start_http_server(a.port)
         print(f"serving on :{a.port}/metrics (k={model.k}, threshold={model.threshold:.3f})")
     last_fit = time.time()
     while True:
         raw, _ = prom.fetch_metrics(minutes=3, url=a.prom_url)
-        df = core.preprocess(raw).reindex(columns=cols).dropna()
-        if len(df):
-            s = core.score(model, df.tail(1))
+        # A filled gap would give an old measurement a new timestamp.
+        latest = raw.reindex(columns=cols).replace([np.inf, -np.inf], np.nan).dropna().sort_index().tail(1)
+        if not latest.empty:
+            s = core.score(model, latest)
             err = float(s["recon_error"].iloc[-1])
             err_g.set(err)
             thr_g.set(model.threshold)
             an_g.set(int(err > model.threshold))
-            for name, v in model.transform(df.tail(1)).iloc[-1].items():
+            for name, v in model.transform(latest).iloc[-1].items():
                 pc_g.labels(name).set(float(v))
+            last_scored_g.set(latest.index[-1].timestamp())
             print(f"recon_error={err:.3f} threshold={model.threshold:.3f} top={s['top_contributor'].iloc[-1]}")
         if a.once:
             return 0
