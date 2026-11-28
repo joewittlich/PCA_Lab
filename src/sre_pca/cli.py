@@ -98,6 +98,7 @@ def main(argv: list[str] | None = None) -> int:
     if used == "prometheus" and scenario.get("end"):
         run_end = runs.parse_time(scenario["end"])
     ev = core.evaluate(scores, faults, base, run_end=run_end)
+    chapters = core.chapter_report(scores, (manifest or {}).get("chapters") or [])
 
     trained_start, trained_end = _bound_text(df.index, base)
     print(f"\nsource={used} rows={len(df)} descriptors={len(model.columns)} baseline_rows={int(base.sum())}")
@@ -111,6 +112,15 @@ def main(argv: list[str] | None = None) -> int:
           f"threshold (q{a.quantile}) = {model.threshold:.3f}")
     print("\nloadings (first PCs):\n", model.loadings().round(2).to_string())
     print("\ndetection summary (fraction of samples flagged as anomalous):\n", ev.to_string(index=False))
+    if chapters:
+        print("\nchapters (flagged fraction, seconds to the first flag, contributors in the order they appear):")
+        for chapter in chapters:
+            names = " -> ".join(item["name"] for item in chapter["contributors"]) or "-"
+            flagged = chapter["flagged_frac"]
+            flagged_text = "n/a" if flagged is None else f"{flagged:.0%}"
+            first = chapter["seconds_to_first_flag"]
+            first_text = "n/a" if first is None else f"{first:.0f}s"
+            print(f"  {chapter['name']}: samples={chapter['samples']} flagged={flagged_text} first={first_text} contributors={names}")
     top = scores[scores["anomaly"]]["top_contributor"].value_counts().head(5)
     if len(top):
         print("\ntop contributors among flagged samples:\n", top.to_string())
@@ -149,6 +159,8 @@ def main(argv: list[str] | None = None) -> int:
         "baseline_rule": rule,
         "fault_intervals": core.fault_intervals(faults),
     }
+    if chapters:
+        summary["chapters"] = chapters
     (out / "summary.json").write_text(json.dumps(summary, indent=2, default=str) + "\n", encoding="utf-8")
     print(f"\nwrote {out}/pca_scree_scatter.png, recon_error.png, raw_metrics.png, scores.csv, summary.json")
     return 0

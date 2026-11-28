@@ -8,7 +8,16 @@ import pandas as pd
 
 from .core import PCAModel
 
-FAULT_COLORS = {"fault_latency": "tab:orange", "fault_cpu": "tab:red", "fault_errors": "tab:purple"}
+FAULT_COLORS = {
+    "fault_latency": "tab:orange",
+    "fault_cpu": "tab:red",
+    "fault_errors": "tab:purple",
+    "fault_retries": "tab:brown",
+    "fault_client_retries": "tab:pink",
+    "fault_downstream": "tab:cyan",
+    "fault_timeout": "darkorange",
+    "fault_leak": "tab:gray",
+}
 
 
 def shade_faults(ax, faults: pd.DataFrame | None) -> None:

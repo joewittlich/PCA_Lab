@@ -109,7 +109,7 @@ The same run writes:
 
 | File | What it shows |
 |---|---|
-| `reports/summary.json` | Source, components, threshold, detection rates, query window, baseline bounds, and fault intervals |
+| `reports/summary.json` | Source, components, threshold, detection rates, query window, baseline bounds, fault intervals, and one row per recorded chapter |
 | `reports/scores.csv` | Reconstruction error, anomaly flag, and fault flags per sample |
 | `reports/pca_scree_scatter.png` | Variance by component, and the samples in the PC1/PC2 plane |
 | `reports/recon_error.png` | Reconstruction error over time, with the threshold and fault shading |
@@ -195,3 +195,17 @@ This pytest session (`tests/test_short_run.py`) starts k6, runs a three-minute b
 | `baseline_rule` is `first_fraction` | The clean loaded stretch was shorter than about seven minutes. `summary.json` names the rule that was used. |
 | `source=synthetic` | The stack was not reachable and `--source prometheus` was left off. Re-run step 5. |
 | Port 3000, 9090, or 8000 is already taken | Copy `.env.example` to `.env`, change that host port, and run `up` again. |
+
+## Second session
+
+The three-hour run is a later sitting of this same lab. It begins with the latency, CPU, and error faults above, then adds retries, a downstream timeout, and a memory leak that stays after its gauge turns off. The steps, the chapter table, and the two analysis commands are in [long-run.md](long-run.md).
+
+```bash
+./scripts/lab.sh load-bg 3h30m 20
+./scripts/lab.sh scenario --profile long
+```
+
+```powershell
+.\scripts\lab.ps1 load-bg 3h30m 20
+.\scripts\lab.ps1 scenario --profile long
+```

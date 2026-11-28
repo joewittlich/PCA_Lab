@@ -1,6 +1,6 @@
 # Thin wrapper around scripts/lab.sh (macOS/Linux/WSL). Windows PowerShell: use scripts\lab.ps1.
 LAB := ./scripts/lab.sh
-.PHONY: help bootstrap up down nuke status load load-bg load-stop scenario analyze synthetic notebook exporter test test-short \
+.PHONY: help bootstrap up down nuke status load load-bg load-stop scenario scenario-long analyze synthetic notebook exporter test test-short \
         fault-latency fault-cpu fault-errors fault-reset
 DUR ?= 10m
 RPS ?= 20
@@ -15,6 +15,7 @@ load:          ; @$(LAB) load $(DUR) $(RPS)
 load-bg:       ; @$(LAB) load-bg $(DUR) $(RPS)
 load-stop:     ; @$(LAB) load-stop
 scenario:      ; @$(LAB) scenario
+scenario-long: ; @$(LAB) scenario --profile long
 analyze:       ; @$(LAB) analyze
 synthetic:     ; @$(LAB) synthetic
 notebook:      ; @$(LAB) notebook

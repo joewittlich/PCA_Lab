@@ -54,8 +54,8 @@ Load & faults
   load [dur] [rps]   run k6 in the foreground (default 10m, 20 rps)   e.g. load 30m 40
   load-bg [dur] [rps] same, detached (stop with: lab.sh load-stop)
   load-stop          stop background k6
-  fault <kind> [v]   latency <ms> | cpu on|off | errors <rate> | reset | status
-  scenario [args]    scripted baseline + faults (pass e.g. --baseline-min 5 --fault-min 2 --gap-min 2)
+  fault <kind> [v]   latency <ms> | cpu on|off | errors <rate> | retries <n> | client_retries <n> | downstream <ms> | timeout <ms> | leak <mb> | leak_release | reset | status
+  scenario [args]    scripted faults. Default ~28 min. --profile long is the 3-hour session (docs/long-run.md)
 Analysis
   analyze [args]     run the full PCA analysis (CLI), plots in reports/   e.g. analyze --run latest
   synthetic          same, on synthetic data (no Docker needed)

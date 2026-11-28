@@ -142,12 +142,14 @@ see if the reconstruction error catches them.
 ./scripts/lab.sh scenario               # 10 min baseline, then latency / CPU / errors for 3 min each, 3 min gaps (~28 min)
 ./scripts/lab.sh scenario --baseline-min 5 --fault-min 2 --gap-min 2   # quicker (~17 min)
 ```
+A second session, after this one, is the three-hour profile in [docs/long-run.md](docs/long-run.md): the same three faults, then retries, a downstream timeout, and a leak that outlives its gauge. Start it with `./scripts/lab.sh scenario --profile long` while `load-bg 3h30m 20` is running.
+
 Or toggle faults by hand:
 ```bash
 ./scripts/lab.sh fault latency 300      # +300 ms per request   (0 = off)
 ./scripts/lab.sh fault cpu on           # background CPU burner (off = stop)
 ./scripts/lab.sh fault errors 0.2       # 20% HTTP 500s         (0 = off)
-./scripts/lab.sh fault reset            # all off
+./scripts/lab.sh fault reset            # clear latency, CPU, and errors (held leak memory stays)
 ./scripts/lab.sh fault status
 ```
 Plain HTTP works too, from any language. For example: `curl -X POST "localhost:8000/fault/latency?ms=300"`, or in PowerShell
@@ -169,7 +171,7 @@ and to keep fault samples out of the baseline.
 
 `--minutes 30` is still a lookback from the moment you run the command. It does not remember when the scenario happened. `--start` and `--end` take an explicit UTC window and override both `--run` and `--minutes`.
 
-This writes plots and data to `reports/`: `pca_scree_scatter.png`, `recon_error.png`, `raw_metrics.png`, `scores.csv` and `summary.json`. The summary includes `run_id`, the query window, the data span, `baseline_start` / `baseline_end` / `baseline_rule`, and `fault_intervals`.
+This writes plots and data to `reports/`: `pca_scree_scatter.png`, `recon_error.png`, `raw_metrics.png`, `scores.csv` and `summary.json`. The summary includes `run_id`, the query window, the data span, `baseline_start` / `baseline_end` / `baseline_rule`, and `fault_intervals`. When the manifest recorded chapters, the summary also lists each chapter's flagged fraction, time to the first flag, and contributors in the order they appeared.
 Useful flags:
 
 | Flag | Meaning |
@@ -312,6 +314,8 @@ app/                     demo FastAPI service (Dockerfile, fault endpoints, metr
 config/otel/             OpenTelemetry Collector config
 config/prometheus/       scrape config
 config/grafana/          provisioned datasource + dashboard
+docs/quickstart.md       first session, from startup through the report
+docs/long-run.md         second session: the three-hour scenario
 docs/first-on-call/      offline lesson, facilitator guide, translation resources, and recorded evidence
 load/load.js             k6 load profile
 notebooks/               starter notebook (+ generator script)

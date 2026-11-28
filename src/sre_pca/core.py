@@ -308,3 +308,40 @@ def evaluate(
         rows.append({"window": "after_run", "samples": int(after_rows.sum()), "flagged_frac": float(scores["anomaly"][after_rows].mean())})
     rows.append({"window": "baseline (train)", "samples": int(base.sum()), "flagged_frac": float(scores["anomaly"][base].mean())})
     return pd.DataFrame(rows)
+
+
+def chapter_report(scores: pd.DataFrame, chapters: list[dict]) -> list[dict]:
+    """Score each manifest chapter on ``[start, end)``.
+
+    ``seconds_to_first_flag`` is measured from the chapter start. Contributors are listed in the
+    order they first appear among flagged rows in that chapter.
+    """
+    report = []
+    for chapter in chapters:
+        if not chapter.get("start") or not chapter.get("end"):
+            continue
+        start = _utc_timestamp(chapter["start"], scores.index)
+        end = _utc_timestamp(chapter["end"], scores.index)
+        window = scores[(scores.index >= start) & (scores.index < end)]
+        flagged = window[window["anomaly"]] if len(window) else window
+        contributors: list[dict] = []
+        seen: dict[str, int] = {}
+        for name in flagged["top_contributor"] if len(flagged) else []:
+            if name not in seen:
+                contributors.append({"name": str(name), "flagged_samples": 0})
+                seen[name] = len(contributors) - 1
+            contributors[seen[name]]["flagged_samples"] += 1
+        seconds = None
+        if len(flagged):
+            seconds = float((flagged.index[0] - start).total_seconds())
+        report.append({
+            "name": chapter.get("name"),
+            "role": chapter.get("role"),
+            "start": _iso(start),
+            "end": _iso(end),
+            "samples": int(len(window)),
+            "flagged_frac": float(flagged.shape[0] / len(window)) if len(window) else None,
+            "seconds_to_first_flag": seconds,
+            "contributors": contributors,
+        })
+    return report
