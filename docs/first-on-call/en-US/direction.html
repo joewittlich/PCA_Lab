@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en-US" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-key="cases.direction.tab">Same size change, different direction | PCA Lab</title>
+  <style>
+    :root { color-scheme: light; font: 1.05rem/1.6 "Source Sans 3", "Segoe UI", sans-serif; color: #18313b; background: #f3f6f3; }
+    * { box-sizing: border-box; }
+    body { margin: 0; overflow-wrap: anywhere; }
+    main { max-inline-size: 48rem; margin-inline: auto; background: white; padding: clamp(1rem, 4vw, 3rem); border-block-start: .5rem solid #086355; }
+    h1 { font: 500 clamp(2rem, 6vw, 3rem)/1.15 Georgia, serif; margin-block: .3rem 1rem; }
+    h2 { font-size: 1.25rem; line-height: 1.3; }
+    p, label, figcaption { max-inline-size: 66ch; }
+    label, summary { font-weight: 650; }
+    label, textarea { display: block; }
+    textarea { width: 100%; min-height: 6rem; margin-block: .5rem 1rem; padding: .6rem; font: inherit; resize: vertical; }
+    details { margin-block: 1rem; padding: .65rem 1rem; background: #eef5ee; border-inline-start: .22rem solid #086355; }
+    summary { cursor: pointer; padding-block: .35rem; }
+    a { color: #075a50; }
+    button { background: #086355; color: white; border: 0; border-radius: .3rem; font: inherit; padding: .5rem 1rem; cursor: pointer; }
+    :focus-visible { outline: .2rem solid #9a4800; outline-offset: .18rem; }
+    figure { margin: 1rem 0; }
+    svg { width: min(100%, 20rem); height: auto; display: block; }
+    footer { border-block-start: 1px solid #abbbb5; margin-block-start: 2rem; padding-block-start: .75rem; }
+    @media print { main { margin: 0; padding: 0; } button, footer { display: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 data-key="cases.direction.title">Same size change, different direction</h1>
+    <p data-key="cases.intro">This five-minute exercise uses generated data. A principal component analysis (PCA) model learns how CPU use and request rate change together. Its score measures how far a pair of readings falls from the learned line.</p>
+    <p data-key="cases.roles">With a partner, one person predicts what the model will flag. The other asks what to check for people using the service. On your own, answer both questions. Speak or write before you open the result.</p>
+    <h2 data-key="cases.observe">Read the case and make a prediction</h2>
+    <p data-key="cases.direction.setup">During training, CPU use usually rose as more requests arrived. The highest training rate was 29.7 requests per second. The detector learned a line through this pattern. It flags a sample when its squared distance from the line exceeds the threshold. The threshold is about 0.089.</p>
+    <p data-key="cases.direction.points">Sample A has 30.6 requests per second. Sample B has 3.0 requests per second. Both use 0.307 CPU cores. After the detector scales the two measurements, each sample is the same distance from the training average.</p>
+    <label for="direction-answer" data-key="cases.direction.prompt">Which sample will the detector flag? Which measurements would help you decide whether to call someone about A or B?</label>
+    <textarea id="direction-answer" dir="auto" rows="3"></textarea>
+    <details>
+      <summary data-key="cases.direction.open">Show the two scores and discuss your decision</summary>
+      <p data-key="cases.direction.result">A follows the learned line. Its score is almost zero, even though its request rate is higher than any training reading. B moves away from the training average at a right angle to the line. Its score is 6.76, so the detector flags B.</p>
+      <figure class="direction-figure">
+        <svg viewBox="0 0 240 150" aria-hidden="true" focusable="false">
+          <path d="M15 8v129h216" fill="none" stroke="#475c61" stroke-width="2"/>
+          <path d="M50 135 180 5" fill="none" stroke="#52676a" stroke-width="2" stroke-dasharray="4 4"/>
+          <path d="M115 70 165 20M115 70 65 20" fill="none" stroke="#182e38" stroke-width="2"/>
+          <circle cx="115" cy="70" r="4" fill="#182e38"/>
+          <rect x="160" y="15" width="10" height="10" fill="#086355"/>
+          <path d="m65 13 7 7-7 7-7-7z" fill="#9a451a"/>
+        </svg>
+        <figcaption data-key="cases.direction.caption">Direction diagram. Request rate increases to the right. CPU use increases upward. The dot is the training average. The square (A) follows the dashed training line. The diamond (B) moves away from it. The two moves have the same length.</figcaption>
+      </figure>
+      <p data-key="cases.direction.debrief">For A, check response time and remaining capacity during the extra traffic. For B, ask what else is using CPU. For either sample, ask whether people can finish their task. What finding would change your handoff?</p>
+    </details>
+    <p data-key="cases.feedback">Discuss one observation, one uncertainty, and one check. Revise your answer if the discussion changes your decision.</p>
+    <button type="button" hidden data-key="cases.save">Save your answer as text</button>
+    <p role="status"></p>
+    <template id="empty" data-key="cases.empty">Enter an answer before saving.</template>
+    <template id="saved" data-key="cases.saved">Your notes are ready to save.</template>
+    <noscript><p data-key="cases.copy">Copy your answer to a text file to save it.</p></noscript>
+    <footer><a href="index.html" data-key="cases.home">First on-call handoff lesson</a></footer>
+  </main>
+  <script>
+    const field = document.querySelector('textarea');
+    const save = document.querySelector('button');
+    const feedback = document.querySelector('[role=status]');
+    save.hidden = false;
+    save.addEventListener('click', () => {
+      if (!field.value.trim()) {
+        feedback.textContent = document.querySelector('#empty').content.textContent;
+        field.focus();
+        return;
+      }
+      const notes = [document.title, field.labels[0].textContent, field.value.trim()].join('\n\n');
+      const url = URL.createObjectURL(new Blob([notes + '\n'], {type: 'text/plain;charset=utf-8'}));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = field.id + '.txt';
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      feedback.textContent = document.querySelector('#saved').content.textContent;
+    });
+  </script>
+</body>
+</html>

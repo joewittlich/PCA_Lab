@@ -202,6 +202,19 @@ current, lower request rates. Each metric stays within its own baseline range du
 For this synthetic workload, a healthy high-traffic CPU reading is unusual when paired with low
 traffic. The PCA score measures how far that pairing falls from the learned relationship.
 
+### Predict what PCA will flag
+
+Download and extract the repository, then open any of these US English HTML files in a browser.
+Each is an independent five-minute exercise with its own prediction, answer reveal, and notes.
+You can use one file offline, alone or with a partner.
+
+- [Same size change, different direction](docs/first-on-call/en-US/direction.html) asks whether high traffic can have a low score.
+- [A fault enters the training data](docs/first-on-call/en-US/training.html) compares two models on the same simulated incident.
+- [New timestamps, repeated readings](docs/first-on-call/en-US/readings.html) asks how to tell steady traffic from a sensor repeating an old reading.
+
+To reproduce all three results with the project dependencies, run `uv run python -m sre_pca.prediction_exercises`.
+The [facilitator and review notes](docs/first-on-call/en-US/prediction-exercises.md) connect each discussion to its simulation.
+
 ### What's in the feature matrix
 
 The analysis uses 11 descriptors, each one PromQL expression (`src/sre_pca/prom.py`, `DEFAULT_QUERIES`): request rate,

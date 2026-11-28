@@ -114,6 +114,24 @@
       "meaning": "Bring another person into the response when their help is needed.",
       "context": "Use a familiar role name, such as service owner or on-call lead. Keep the link between a check result and the decision to contact someone.",
       "machine_tokens": []
+    },
+    "training_line": {
+      "preferred": "learned line",
+      "meaning": "A straight line that represents the main direction of variation in the scaled training measurements.",
+      "context": "Use the same term in the direction diagram and its text description.",
+      "machine_tokens": []
+    },
+    "cpu_core": {
+      "preferred": "CPU core",
+      "meaning": "A unit for the processor time used per second. Using 0.28 cores means using 0.28 seconds of processor time per second.",
+      "context": "Keep the decimal quantity with the unit. It describes CPU use.",
+      "machine_tokens": []
+    },
+    "replay": {
+      "preferred": "replay",
+      "meaning": "A sequence of previously generated values used again in a simulation.",
+      "context": "The 20 replay samples form one simulated CPU fault.",
+      "machine_tokens": []
     }
   }
 }
