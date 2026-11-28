@@ -5,7 +5,7 @@
   .\scripts\lab.ps1 up
   .\scripts\lab.ps1 load 30m 40
   .\scripts\lab.ps1 fault latency 300
-  .\scripts\lab.ps1 analyze --minutes 40
+  .\scripts\lab.ps1 analyze --run latest
 #>
 param(
     [Parameter(Position = 0)][string]$Command = "help",
@@ -59,7 +59,7 @@ Stack:    up | down | nuke | status | logs [service]
 Load:     load [dur] [rps] | load-bg [dur] [rps] | load-stop
 Faults:   fault latency <ms> | fault cpu on|off | fault errors <rate> | fault reset | fault status
           scenario [--baseline-min 5 --fault-min 2 --gap-min 2]
-Analysis: analyze [--minutes 40 ...] | synthetic | notebook | exporter | test
+Analysis: analyze [--run latest | --minutes 40 ...] | synthetic | notebook | exporter | test | test-short
 "@
 }
 
@@ -85,22 +85,34 @@ switch ($Command) {
         Assert-Docker
         $env:LOAD_DURATION = if ($Rest.Count -ge 1) { $Rest[0] } else { "10m" }
         $env:LOAD_RPS      = if ($Rest.Count -ge 2) { $Rest[1] } else { "20" }
-        Invoke-Compose --profile load run --rm k6
+        try { Invoke-Py python -m sre_pca.runs load-start --duration $env:LOAD_DURATION --rps $env:LOAD_RPS }
+        catch { Write-Host "warning: could not write the run manifest" }
+        try { Invoke-Compose --profile load run --rm k6 }
+        finally {
+            try { Invoke-Py python -m sre_pca.runs load-end } catch { Write-Host "warning: could not record the load end time" }
+        }
     }
     "load-bg" {
         Assert-Docker
         $env:LOAD_DURATION = if ($Rest.Count -ge 1) { $Rest[0] } else { "10m" }
         $env:LOAD_RPS      = if ($Rest.Count -ge 2) { $Rest[1] } else { "20" }
+        try { Invoke-Py python -m sre_pca.runs load-start --duration $env:LOAD_DURATION --rps $env:LOAD_RPS }
+        catch { Write-Host "warning: could not write the run manifest" }
         Invoke-Compose --profile load up -d k6
         Write-Host "k6 running in background: .\scripts\lab.ps1 logs k6"
     }
-    "load-stop" { Invoke-Compose --profile load stop k6; Invoke-Compose --profile load rm -f k6 }
+    "load-stop" {
+        Invoke-Compose --profile load stop k6
+        Invoke-Compose --profile load rm -f k6
+        try { Invoke-Py python -m sre_pca.runs load-end } catch { Write-Host "warning: could not record the load end time" }
+    }
     "fault"     { Invoke-Py sre-fault @Rest }
     "scenario"  { Invoke-Py sre-scenario @Rest }
     "analyze"   { Invoke-Py sre-pca @Rest }
     "synthetic" { Invoke-Py sre-pca --source synthetic @Rest }
     "notebook"  { Invoke-Py jupyter lab --notebook-dir=notebooks }
     "exporter"  { Invoke-Py sre-pca-exporter @Rest }
-    "test"      { Invoke-Py pytest -q }
+    "test"       { Invoke-Py pytest -q }
+    "test-short" { Invoke-Py pytest -q -m short_run }
     default     { Show-Usage }
 }

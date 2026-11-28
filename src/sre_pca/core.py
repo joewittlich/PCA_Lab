@@ -11,12 +11,15 @@ Notation (matches the chat):  x ~= mu + sigma * (z @ W.T)
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
 
 from . import prom, synthetic
+
+_BASELINE_MARGIN = pd.Timedelta(minutes=2)
 
 
 # --------------------------------------------------------------------------- loading
@@ -25,12 +28,18 @@ def load_metrics(
     minutes: float = 60,
     step: str = "15s",
     prom_url: str | None = None,
+    start: datetime | None = None,
+    end: datetime | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, str]:
-    """Return (metrics, fault_flags, source_used). source: 'auto' | 'prometheus' | 'synthetic'."""
+    """Return (metrics, fault_flags, source_used). source: 'auto' | 'prometheus' | 'synthetic'.
+
+    ``start`` and ``end`` bound the Prometheus query. With ``start`` omitted, the query is the
+    ``minutes`` before ``end`` (default: now). Synthetic data ignores both.
+    """
     url = prom_url or prom.PROM_URL
     if source in ("auto", "prometheus"):
         if prom.is_up(url):
-            df, faults = prom.fetch_metrics(minutes=minutes, step=step, url=url)
+            df, faults = prom.fetch_metrics(minutes=minutes, step=step, url=url, start=start, end=end)
             if df.dropna(how="all").shape[0] >= 20:
                 return df, faults, "prometheus"
             if source == "prometheus":
@@ -84,32 +93,100 @@ def remove_seasonality(df: pd.DataFrame, period: int, method: str = "stl") -> pd
     return out
 
 
+def _utc_timestamp(value: datetime | pd.Timestamp, index: pd.DatetimeIndex) -> pd.Timestamp:
+    stamp = pd.Timestamp(value)
+    if stamp.tzinfo is None:
+        stamp = stamp.tz_localize("UTC")
+    else:
+        stamp = stamp.tz_convert("UTC")
+    if index.tz is None:
+        return stamp.tz_localize(None)
+    return stamp.tz_convert(index.tz)
+
+
+def _iso(value: pd.Timestamp) -> str:
+    stamp = pd.Timestamp(value)
+    if stamp.tzinfo is None:
+        stamp = stamp.tz_localize("UTC")
+    else:
+        stamp = stamp.tz_convert("UTC")
+    return stamp.isoformat(timespec="seconds")
+
+
 def choose_baseline(
     df: pd.DataFrame,
     faults: pd.DataFrame | None = None,
     baseline_minutes: float | None = None,
     frac: float = 0.4,
     margin_samples: int = 8,
+    baseline_start: datetime | pd.Timestamp | None = None,
+    baseline_end: datetime | pd.Timestamp | None = None,
+    margin: pd.Timedelta | None = None,
 ) -> pd.Series:
     """Boolean mask of 'known normal' rows used to fit PCA.
 
-    Priority: explicit baseline_minutes from the start of the window
-              -> everything before the first injected fault (minus a margin)
-              -> the first `frac` of the window."""
+    Priority: explicit baseline_minutes from the start of the pulled window
+              -> [baseline_start, baseline_end - margin) from a run manifest
+              -> everything before the first injected fault (minus margin_samples)
+              -> the first `frac` of the window.
+
+    The returned series has ``attrs["baseline_rule"]`` set to ``baseline_minutes``,
+    ``manifest``, ``first_fault``, or ``first_fraction``.
+    """
+    if margin is None:
+        margin = _BASELINE_MARGIN
     mask = pd.Series(False, index=df.index)
+    rule = "first_fraction"
     if baseline_minutes:
         mask[df.index < df.index[0] + pd.Timedelta(minutes=baseline_minutes)] = True
+        rule = "baseline_minutes"
+    elif baseline_end is not None:
+        start = _utc_timestamp(baseline_start, df.index) if baseline_start is not None else df.index[0]
+        end = _utc_timestamp(baseline_end, df.index) - margin
+        mask[(df.index >= start) & (df.index < end)] = True
+        rule = "manifest"
     elif faults is not None and faults.reindex(df.index).fillna(0).to_numpy().any():
         any_fault = faults.reindex(df.index).fillna(0).max(axis=1).to_numpy() > 0
         first = int(np.argmax(any_fault))
         mask.iloc[: max(0, first - margin_samples)] = True
+        rule = "first_fault"
     if mask.sum() < 20:
         mask[:] = False
         mask.iloc[: max(20, int(len(df) * frac))] = True
+        rule = "first_fraction"
     if faults is not None:  # never train on a labelled fault sample
         f = faults.reindex(df.index).fillna(0).max(axis=1) > 0
-        mask &= ~f
+        mask = mask & ~f
+    mask.attrs["baseline_rule"] = rule
     return mask
+
+
+def fault_intervals(faults: pd.DataFrame) -> list[dict]:
+    """Contiguous stretches where a fault gauge is on. ``end`` is the last on-sample."""
+    intervals = []
+    for column in faults.columns:
+        on = faults[column].fillna(0).to_numpy() > 0
+        if not on.any():
+            continue
+        kind = column.removeprefix("fault_")
+        start_at = None
+        for pos, flag in enumerate(on):
+            if flag and start_at is None:
+                start_at = pos
+            elif not flag and start_at is not None:
+                intervals.append({
+                    "type": kind,
+                    "start": _iso(faults.index[start_at]),
+                    "end": _iso(faults.index[pos - 1]),
+                })
+                start_at = None
+        if start_at is not None:
+            intervals.append({
+                "type": kind,
+                "start": _iso(faults.index[start_at]),
+                "end": _iso(faults.index[len(on) - 1]),
+            })
+    return intervals
 
 
 # --------------------------------------------------------------------------- model
@@ -198,10 +275,18 @@ def inverse_from_pcs(model: PCAModel, z: list[float] | np.ndarray) -> pd.Series:
     return pd.Series(x, index=model.columns, name="back_calculated")
 
 
-def evaluate(scores: pd.DataFrame, faults: pd.DataFrame, baseline_mask: pd.Series, lag_samples: int = 4) -> pd.DataFrame:
+def evaluate(
+    scores: pd.DataFrame,
+    faults: pd.DataFrame,
+    baseline_mask: pd.Series,
+    lag_samples: int = 4,
+    run_end: datetime | pd.Timestamp | None = None,
+) -> pd.DataFrame:
     """Detection rate per fault type and false-positive rate on non-fault, non-baseline rows.
 
-    lag_samples dilates each fault window forward to account for rate()[1m] smearing."""
+    lag_samples dilates each fault window forward to account for rate()[1m] smearing.
+    Rows after ``run_end`` are reported as ``after_run`` and stay out of the held-out normal row.
+    """
     f = faults.reindex(scores.index).fillna(0).astype(bool)
     f_dil = f.rolling(lag_samples + 1, min_periods=1).max().astype(bool)
     rows = []
@@ -210,9 +295,16 @@ def evaluate(scores: pd.DataFrame, faults: pd.DataFrame, baseline_mask: pd.Serie
         if sel.any():
             rows.append({"window": c, "samples": int(sel.sum()), "flagged_frac": float(scores["anomaly"][sel].mean())})
     any_f = f_dil.any(axis=1).to_numpy()
-    normal = (~any_f) & (~baseline_mask.reindex(scores.index).fillna(False).to_numpy())
+    labelled = f.any(axis=1).to_numpy()
+    after = np.zeros(len(scores), dtype=bool)
+    if run_end is not None:
+        after = np.asarray(scores.index > _utc_timestamp(run_end, scores.index))
+    base = baseline_mask.reindex(scores.index).fillna(False).to_numpy()
+    normal = (~any_f) & (~base) & (~after)
     if normal.any():
         rows.append({"window": "normal (held-out)", "samples": int(normal.sum()), "flagged_frac": float(scores["anomaly"][normal].mean())})
-    base = baseline_mask.reindex(scores.index).fillna(False).to_numpy()
+    after_rows = after & (~labelled)
+    if after_rows.any():
+        rows.append({"window": "after_run", "samples": int(after_rows.sum()), "flagged_frac": float(scores["anomaly"][after_rows].mean())})
     rows.append({"window": "baseline (train)", "samples": int(base.sum()), "flagged_frac": float(scores["anomaly"][base].mean())})
     return pd.DataFrame(rows)

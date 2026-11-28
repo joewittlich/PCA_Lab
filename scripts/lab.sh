@@ -57,11 +57,12 @@ Load & faults
   fault <kind> [v]   latency <ms> | cpu on|off | errors <rate> | reset | status
   scenario [args]    scripted baseline + faults (pass e.g. --baseline-min 5 --fault-min 2 --gap-min 2)
 Analysis
-  analyze [args]     run the full PCA analysis (CLI), plots in reports/   e.g. analyze --minutes 40
+  analyze [args]     run the full PCA analysis (CLI), plots in reports/   e.g. analyze --run latest
   synthetic          same, on synthetic data (no Docker needed)
   notebook           start JupyterLab on notebooks/
   exporter           publish live anomaly score on :9105 (see README Next steps)
-  test               run the Python tests (synthetic, no Docker needed)
+  test               run the offline Python tests (no Docker needed)
+  test-short         live 5-minute session; writes reports/short-run/ (stack must be up)
 USAGE
 }
 
@@ -89,16 +90,39 @@ for t in json.load(sys.stdin)["data"]["activeTargets"]:
     echo "Demo app:   $APP_URL/docs"
     ;;
   logs)      compose logs -f "$@" ;;
-  load)      need_docker; LOAD_DURATION="${1:-10m}" LOAD_RPS="${2:-20}" compose --profile load run --rm k6 ;;
-  load-bg)   need_docker; LOAD_DURATION="${1:-10m}" LOAD_RPS="${2:-20}" compose --profile load up -d k6; echo "k6 running in background: lab.sh logs k6" ;;
-  load-stop) compose --profile load stop k6; compose --profile load rm -f k6 ;;
+  load)
+    need_docker
+    LOAD_DURATION="${1:-10m}" LOAD_RPS="${2:-20}"
+    py python -m sre_pca.runs load-start --duration "$LOAD_DURATION" --rps "$LOAD_RPS" \
+      || echo "warning: could not write the run manifest" >&2
+    set +e
+    compose --profile load run --rm k6
+    status=$?
+    set -e
+    py python -m sre_pca.runs load-end || true
+    exit "$status"
+    ;;
+  load-bg)
+    need_docker
+    LOAD_DURATION="${1:-10m}" LOAD_RPS="${2:-20}"
+    py python -m sre_pca.runs load-start --duration "$LOAD_DURATION" --rps "$LOAD_RPS" \
+      || echo "warning: could not write the run manifest" >&2
+    compose --profile load up -d k6
+    echo "k6 running in background: lab.sh logs k6"
+    ;;
+  load-stop)
+    compose --profile load stop k6
+    compose --profile load rm -f k6
+    py python -m sre_pca.runs load-end || true
+    ;;
   fault)     py sre-fault "$@" ;;
   scenario)  py sre-scenario "$@" ;;
   analyze)   py sre-pca "$@" ;;
   synthetic) py sre-pca --source synthetic "$@" ;;
   notebook)  py jupyter lab --notebook-dir=notebooks ;;
   exporter)  py sre-pca-exporter "$@" ;;
-  test)      py pytest -q ;;
+  test)       py pytest -q ;;
+  test-short) py pytest -q -m short_run ;;
   help|-h|--help) usage ;;
   *)         echo "unknown command: $cmd" >&2; usage; exit 1 ;;
 esac
