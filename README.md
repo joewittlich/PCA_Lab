@@ -181,6 +181,8 @@ baseline, then shows the scree plot, the PC1/PC2 scatter, reconstruction error o
 transform** (x = μ + σ ⊙ zWᵀ), including a check that the back-calculated point projects back to where you chose.
 If Prometheus isn't running, it uses synthetic data, so you can explore it before Docker works.
 `notebooks/make_notebook.py` regenerates the notebook from code.
+To check notebook execution from a terminal, run `uv run pytest -q tests/test_notebook.py`.
+On Windows, this test uses a dedicated event loop to read messages from the Jupyter kernel.
 
 **No Docker yet?** Run `./scripts/lab.sh synthetic` (or `uv run sre-pca --source synthetic`) and `./scripts/lab.sh test`.
 The synthetic command analyzes generated data. The tests also cover the exporter, detector comparison, and lesson translation tool.
